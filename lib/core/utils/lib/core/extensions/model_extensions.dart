@@ -7,27 +7,34 @@ import 'package:dims/features/notifications/data/models/notification_model.dart'
 
 // Placement Extensions
 extension PlacementModelExtension on PlacementModel {
-  DocumentReference? get studentRef => 
-      studentRefPath != null ? FirebaseFirestore.instance.doc(studentRefPath!) : null;
+  // Updated field names in new PlacementModel
+  DocumentReference get studentRef => 
+      FirebaseFirestore.instance.collection('students').doc(studentId);
   
-  DocumentReference? get companyRef => 
-      companyRefPath != null ? FirebaseFirestore.instance.doc(companyRefPath!) : null;
+  DocumentReference get companyRef => 
+      FirebaseFirestore.instance.collection('companies').doc(companyId);
   
-  DocumentReference? get supervisorRef => 
-      supervisorRefPath != null ? FirebaseFirestore.instance.doc(supervisorRefPath!) : null;
+  DocumentReference? get universitySupervisorRef => 
+      universitySupervisorId != null 
+          ? FirebaseFirestore.instance.collection('supervisorProfiles').doc(universitySupervisorId!)
+          : null;
+  
+  DocumentReference? get companySupervisorRef => 
+      companySupervisorId != null 
+          ? FirebaseFirestore.instance.collection('companySupervisors').doc(companySupervisorId!)
+          : null;
 }
 
 // Logbook Entry Extensions
 extension LogbookEntryModelExtension on LogbookEntryModel {
-  // studentRefPath exists in your model
-  DocumentReference? get studentRef => 
-      studentRefPath.isNotEmpty ? FirebaseFirestore.instance.doc(studentRefPath) : null;
+  // Updated field names in new LogbookEntryModel
+  DocumentReference get studentRef => 
+      FirebaseFirestore.instance.collection('students').doc(studentId);
   
-  // placementRefPath exists in your model
-  DocumentReference? get placementRef => 
-      placementRefPath.isNotEmpty ? FirebaseFirestore.instance.doc(placementRefPath) : null;
+  DocumentReference get placementRef => 
+      FirebaseFirestore.instance.collection('placements').doc(placementId);
   
-  // These now work because we added them back to the model above
+  // GPS location helper
   GeoPoint? get gpsLocation => 
       (latitude != null && longitude != null)
           ? GeoPoint(latitude!, longitude!)
@@ -36,13 +43,21 @@ extension LogbookEntryModelExtension on LogbookEntryModel {
 
 // Evaluation Extensions
 extension EvaluationModelExtension on EvaluationModel {
-  // In the updated EvaluationModel, we use studentId and supervisorId
-  // We point them to the correct Firestore collection paths
+  // Updated field names in new EvaluationModel
   DocumentReference get studentRef => 
       FirebaseFirestore.instance.collection('students').doc(studentId);
   
-  DocumentReference get supervisorRef => 
-      FirebaseFirestore.instance.collection('supervisorProfiles').doc(supervisorId);
+  DocumentReference get evaluatorRef {
+    // Return appropriate collection based on evaluator type
+    if (evaluatorType == EvaluationType.companySupervisor) {
+      return FirebaseFirestore.instance.collection('companySupervisors').doc(evaluatorId);
+    } else {
+      return FirebaseFirestore.instance.collection('supervisorProfiles').doc(evaluatorId);
+    }
+  }
+  
+  DocumentReference get placementRef => 
+      FirebaseFirestore.instance.collection('placements').doc(placementId);
 }
 
 // Notification Extensions

@@ -9,6 +9,9 @@ import '../../../student/data/models/student_profile_model.dart';
 import '../../../logbook/data/models/logbook_entry_model.dart';
 import '../../controllers/supervisor_controller.dart';
 
+
+import '../../../logbook/data/models/weekly_logbook_summary_model.dart';
+
 // Supervisor's own profile
 // Explicitly typed as <SupervisorProfileModel?>
 final supervisorProfileProvider = StreamProvider<SupervisorProfileModel?>((ref) {
@@ -53,4 +56,45 @@ final pendingLogbooksProvider = StreamProvider<List<LogbookEntryModel>>((ref) {
   if (supervisorUid == null) return Stream.value([]);
 
   return ref.watch(supervisorControllerProvider).getPendingLogbooks(supervisorUid);
+});
+
+final pendingWeeklySummariesProvider = StreamProvider<List<WeeklyLogbookSummaryModel>>((ref) {
+  final authState = ref.watch(authStateProvider);
+  final userId = authState.value?.uid;
+  
+  if (userId == null) return Stream.value([]);
+
+  return FirebaseFirestore.instance
+      .collection('weeklyLogbookSummaries')
+      .where('status', isEqualTo: 'submitted')
+      .orderBy('weekNumber', descending: true)
+      .snapshots()
+      .asyncMap((snapshot) async {
+        // Filter summaries for students assigned to this supervisor
+        final supervisorProfile = await FirebaseFirestore.instance
+            .collection('supervisorProfiles')
+            .doc(userId)
+            .get();
+
+        if (!supervisorProfile.exists) return <WeeklyLogbookSummaryModel>[];
+
+        final profile = SupervisorProfileModel.fromFirestore(supervisorProfile, null);
+        final assignedStudentIds = profile.assignedStudentIds;
+
+        // Filter and parse
+        return snapshot.docs
+            .map((doc) => WeeklyLogbookSummaryModel.fromFirestore(doc, null))
+            .where((summary) => assignedStudentIds.contains(summary.studentId))
+            .toList();
+      })
+      .handleError((e) {
+        print('[PendingWeeklySummaries] Error: $e');
+        return <WeeklyLogbookSummaryModel>[];
+      });
+});
+
+// NEW: Count of pending reviews
+final pendingSummaryReviewsCountProvider = Provider<int>((ref) {
+  final summaries = ref.watch(pendingWeeklySummariesProvider).value ?? [];
+  return summaries.where((s) => !s.isReviewedByUniversitySupervisor).length;
 });

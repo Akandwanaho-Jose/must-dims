@@ -9,21 +9,44 @@ part of 'placement_model.dart';
 _$PlacementModelImpl _$$PlacementModelImplFromJson(Map<String, dynamic> json) =>
     _$PlacementModelImpl(
       id: json['id'] as String,
-      studentRefPath: json['studentRefPath'] as String?,
-      companyRefPath: json['companyRefPath'] as String?,
-      supervisorRefPath: json['supervisorRefPath'] as String?,
+      studentId: json['studentId'] as String,
+      companyId: json['companyId'] as String,
+      universitySupervisorId: json['universitySupervisorId'] as String?,
       companySupervisorName: json['companySupervisorName'] as String?,
       companySupervisorEmail: json['companySupervisorEmail'] as String?,
       companySupervisorPhone: json['companySupervisorPhone'] as String?,
+      companySupervisorId: json['companySupervisorId'] as String?,
+      acceptanceLetterUrl: json['acceptanceLetterUrl'] as String?,
+      acceptanceLetterFileName: json['acceptanceLetterFileName'] as String?,
+      letterUploadedAt: json['letterUploadedAt'] == null
+          ? null
+          : DateTime.parse(json['letterUploadedAt'] as String),
+      status: $enumDecodeNullable(_$PlacementStatusEnumMap, json['status']) ??
+          PlacementStatus.pending,
+      adminNotes: json['adminNotes'] as String?,
+      approvedAt: json['approvedAt'] == null
+          ? null
+          : DateTime.parse(json['approvedAt'] as String),
+      approvedByAdminId: json['approvedByAdminId'] as String?,
+      rejectedAt: json['rejectedAt'] == null
+          ? null
+          : DateTime.parse(json['rejectedAt'] as String),
+      rejectedByAdminId: json['rejectedByAdminId'] as String?,
       academicYear: json['academicYear'] as String,
-      startDate: DateTime.parse(json['startDate'] as String),
-      endDate: DateTime.parse(json['endDate'] as String),
+      startDate: json['startDate'] == null
+          ? null
+          : DateTime.parse(json['startDate'] as String),
+      endDate: json['endDate'] == null
+          ? null
+          : DateTime.parse(json['endDate'] as String),
       actualEndDate: json['actualEndDate'] == null
           ? null
           : DateTime.parse(json['actualEndDate'] as String),
-      status: $enumDecodeNullable(_$PlacementStatusEnumMap, json['status']) ??
-          PlacementStatus.active,
-      attachmentUrl: json['attachmentUrl'] as String?,
+      totalWeeks: (json['totalWeeks'] as num?)?.toInt() ?? 12,
+      weeksCompleted: (json['weeksCompleted'] as num?)?.toInt() ?? 0,
+      progressPercentage:
+          (json['progressPercentage'] as num?)?.toDouble() ?? 0.0,
+      studentNotes: json['studentNotes'] as String?,
       remarks: json['remarks'] as String?,
       createdAt: json['createdAt'] == null
           ? null
@@ -37,18 +60,30 @@ Map<String, dynamic> _$$PlacementModelImplToJson(
         _$PlacementModelImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'studentRefPath': instance.studentRefPath,
-      'companyRefPath': instance.companyRefPath,
-      'supervisorRefPath': instance.supervisorRefPath,
+      'studentId': instance.studentId,
+      'companyId': instance.companyId,
+      'universitySupervisorId': instance.universitySupervisorId,
       'companySupervisorName': instance.companySupervisorName,
       'companySupervisorEmail': instance.companySupervisorEmail,
       'companySupervisorPhone': instance.companySupervisorPhone,
-      'academicYear': instance.academicYear,
-      'startDate': instance.startDate.toIso8601String(),
-      'endDate': instance.endDate.toIso8601String(),
-      'actualEndDate': instance.actualEndDate?.toIso8601String(),
+      'companySupervisorId': instance.companySupervisorId,
+      'acceptanceLetterUrl': instance.acceptanceLetterUrl,
+      'acceptanceLetterFileName': instance.acceptanceLetterFileName,
+      'letterUploadedAt': instance.letterUploadedAt?.toIso8601String(),
       'status': _$PlacementStatusEnumMap[instance.status]!,
-      'attachmentUrl': instance.attachmentUrl,
+      'adminNotes': instance.adminNotes,
+      'approvedAt': instance.approvedAt?.toIso8601String(),
+      'approvedByAdminId': instance.approvedByAdminId,
+      'rejectedAt': instance.rejectedAt?.toIso8601String(),
+      'rejectedByAdminId': instance.rejectedByAdminId,
+      'academicYear': instance.academicYear,
+      'startDate': instance.startDate?.toIso8601String(),
+      'endDate': instance.endDate?.toIso8601String(),
+      'actualEndDate': instance.actualEndDate?.toIso8601String(),
+      'totalWeeks': instance.totalWeeks,
+      'weeksCompleted': instance.weeksCompleted,
+      'progressPercentage': instance.progressPercentage,
+      'studentNotes': instance.studentNotes,
       'remarks': instance.remarks,
       'createdAt': instance.createdAt?.toIso8601String(),
       'updatedAt': instance.updatedAt?.toIso8601String(),
@@ -56,8 +91,11 @@ Map<String, dynamic> _$$PlacementModelImplToJson(
 
 const _$PlacementStatusEnumMap = {
   PlacementStatus.pending: 'pending',
+  PlacementStatus.approved: 'approved',
+  PlacementStatus.rejected: 'rejected',
   PlacementStatus.active: 'active',
   PlacementStatus.completed: 'completed',
   PlacementStatus.cancelled: 'cancelled',
+  PlacementStatus.terminated: 'terminated',
   PlacementStatus.extended: 'extended',
 };

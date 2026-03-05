@@ -21,20 +21,40 @@ PlacementModel _$PlacementModelFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$PlacementModel {
   String get id => throw _privateConstructorUsedError;
-  String? get studentRefPath => throw _privateConstructorUsedError;
-  String? get companyRefPath => throw _privateConstructorUsedError;
-  String? get supervisorRefPath =>
-      throw _privateConstructorUsedError; // Company supervisor details
+  String get studentId => throw _privateConstructorUsedError;
+  String get companyId => throw _privateConstructorUsedError;
+  String? get universitySupervisorId =>
+      throw _privateConstructorUsedError; // Linked from student's currentSupervisorId
+// Company supervisor details (from acceptance letter)
   String? get companySupervisorName => throw _privateConstructorUsedError;
   String? get companySupervisorEmail => throw _privateConstructorUsedError;
   String? get companySupervisorPhone => throw _privateConstructorUsedError;
-  String get academicYear => throw _privateConstructorUsedError;
-  DateTime get startDate => throw _privateConstructorUsedError;
-  DateTime get endDate => throw _privateConstructorUsedError;
-  DateTime? get actualEndDate => throw _privateConstructorUsedError;
+  String? get companySupervisorId =>
+      throw _privateConstructorUsedError; // Will be set when company supervisor creates account
+// Acceptance letter
+  String? get acceptanceLetterUrl => throw _privateConstructorUsedError;
+  String? get acceptanceLetterFileName => throw _privateConstructorUsedError;
+  DateTime? get letterUploadedAt =>
+      throw _privateConstructorUsedError; // Status & approval
   PlacementStatus get status => throw _privateConstructorUsedError;
-  String? get attachmentUrl => throw _privateConstructorUsedError;
-  String? get remarks => throw _privateConstructorUsedError;
+  String? get adminNotes =>
+      throw _privateConstructorUsedError; // Rejection reason or other notes
+  DateTime? get approvedAt => throw _privateConstructorUsedError;
+  String? get approvedByAdminId => throw _privateConstructorUsedError;
+  DateTime? get rejectedAt => throw _privateConstructorUsedError;
+  String? get rejectedByAdminId =>
+      throw _privateConstructorUsedError; // Internship timeline
+  String get academicYear => throw _privateConstructorUsedError;
+  DateTime? get startDate => throw _privateConstructorUsedError;
+  DateTime? get endDate => throw _privateConstructorUsedError;
+  DateTime? get actualEndDate => throw _privateConstructorUsedError;
+  int get totalWeeks => throw _privateConstructorUsedError; // Default 12 weeks
+  int get weeksCompleted => throw _privateConstructorUsedError;
+  double get progressPercentage =>
+      throw _privateConstructorUsedError; // Additional info
+  String? get studentNotes =>
+      throw _privateConstructorUsedError; // Why they chose this company
+  String? get remarks => throw _privateConstructorUsedError; // Timestamps
   DateTime? get createdAt => throw _privateConstructorUsedError;
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
@@ -52,18 +72,30 @@ abstract class $PlacementModelCopyWith<$Res> {
   @useResult
   $Res call(
       {String id,
-      String? studentRefPath,
-      String? companyRefPath,
-      String? supervisorRefPath,
+      String studentId,
+      String companyId,
+      String? universitySupervisorId,
       String? companySupervisorName,
       String? companySupervisorEmail,
       String? companySupervisorPhone,
-      String academicYear,
-      DateTime startDate,
-      DateTime endDate,
-      DateTime? actualEndDate,
+      String? companySupervisorId,
+      String? acceptanceLetterUrl,
+      String? acceptanceLetterFileName,
+      DateTime? letterUploadedAt,
       PlacementStatus status,
-      String? attachmentUrl,
+      String? adminNotes,
+      DateTime? approvedAt,
+      String? approvedByAdminId,
+      DateTime? rejectedAt,
+      String? rejectedByAdminId,
+      String academicYear,
+      DateTime? startDate,
+      DateTime? endDate,
+      DateTime? actualEndDate,
+      int totalWeeks,
+      int weeksCompleted,
+      double progressPercentage,
+      String? studentNotes,
       String? remarks,
       DateTime? createdAt,
       DateTime? updatedAt});
@@ -83,18 +115,30 @@ class _$PlacementModelCopyWithImpl<$Res, $Val extends PlacementModel>
   @override
   $Res call({
     Object? id = null,
-    Object? studentRefPath = freezed,
-    Object? companyRefPath = freezed,
-    Object? supervisorRefPath = freezed,
+    Object? studentId = null,
+    Object? companyId = null,
+    Object? universitySupervisorId = freezed,
     Object? companySupervisorName = freezed,
     Object? companySupervisorEmail = freezed,
     Object? companySupervisorPhone = freezed,
-    Object? academicYear = null,
-    Object? startDate = null,
-    Object? endDate = null,
-    Object? actualEndDate = freezed,
+    Object? companySupervisorId = freezed,
+    Object? acceptanceLetterUrl = freezed,
+    Object? acceptanceLetterFileName = freezed,
+    Object? letterUploadedAt = freezed,
     Object? status = null,
-    Object? attachmentUrl = freezed,
+    Object? adminNotes = freezed,
+    Object? approvedAt = freezed,
+    Object? approvedByAdminId = freezed,
+    Object? rejectedAt = freezed,
+    Object? rejectedByAdminId = freezed,
+    Object? academicYear = null,
+    Object? startDate = freezed,
+    Object? endDate = freezed,
+    Object? actualEndDate = freezed,
+    Object? totalWeeks = null,
+    Object? weeksCompleted = null,
+    Object? progressPercentage = null,
+    Object? studentNotes = freezed,
     Object? remarks = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
@@ -104,17 +148,17 @@ class _$PlacementModelCopyWithImpl<$Res, $Val extends PlacementModel>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      studentRefPath: freezed == studentRefPath
-          ? _value.studentRefPath
-          : studentRefPath // ignore: cast_nullable_to_non_nullable
-              as String?,
-      companyRefPath: freezed == companyRefPath
-          ? _value.companyRefPath
-          : companyRefPath // ignore: cast_nullable_to_non_nullable
-              as String?,
-      supervisorRefPath: freezed == supervisorRefPath
-          ? _value.supervisorRefPath
-          : supervisorRefPath // ignore: cast_nullable_to_non_nullable
+      studentId: null == studentId
+          ? _value.studentId
+          : studentId // ignore: cast_nullable_to_non_nullable
+              as String,
+      companyId: null == companyId
+          ? _value.companyId
+          : companyId // ignore: cast_nullable_to_non_nullable
+              as String,
+      universitySupervisorId: freezed == universitySupervisorId
+          ? _value.universitySupervisorId
+          : universitySupervisorId // ignore: cast_nullable_to_non_nullable
               as String?,
       companySupervisorName: freezed == companySupervisorName
           ? _value.companySupervisorName
@@ -128,29 +172,77 @@ class _$PlacementModelCopyWithImpl<$Res, $Val extends PlacementModel>
           ? _value.companySupervisorPhone
           : companySupervisorPhone // ignore: cast_nullable_to_non_nullable
               as String?,
-      academicYear: null == academicYear
-          ? _value.academicYear
-          : academicYear // ignore: cast_nullable_to_non_nullable
-              as String,
-      startDate: null == startDate
-          ? _value.startDate
-          : startDate // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      endDate: null == endDate
-          ? _value.endDate
-          : endDate // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      actualEndDate: freezed == actualEndDate
-          ? _value.actualEndDate
-          : actualEndDate // ignore: cast_nullable_to_non_nullable
+      companySupervisorId: freezed == companySupervisorId
+          ? _value.companySupervisorId
+          : companySupervisorId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      acceptanceLetterUrl: freezed == acceptanceLetterUrl
+          ? _value.acceptanceLetterUrl
+          : acceptanceLetterUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      acceptanceLetterFileName: freezed == acceptanceLetterFileName
+          ? _value.acceptanceLetterFileName
+          : acceptanceLetterFileName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      letterUploadedAt: freezed == letterUploadedAt
+          ? _value.letterUploadedAt
+          : letterUploadedAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
       status: null == status
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as PlacementStatus,
-      attachmentUrl: freezed == attachmentUrl
-          ? _value.attachmentUrl
-          : attachmentUrl // ignore: cast_nullable_to_non_nullable
+      adminNotes: freezed == adminNotes
+          ? _value.adminNotes
+          : adminNotes // ignore: cast_nullable_to_non_nullable
+              as String?,
+      approvedAt: freezed == approvedAt
+          ? _value.approvedAt
+          : approvedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      approvedByAdminId: freezed == approvedByAdminId
+          ? _value.approvedByAdminId
+          : approvedByAdminId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      rejectedAt: freezed == rejectedAt
+          ? _value.rejectedAt
+          : rejectedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      rejectedByAdminId: freezed == rejectedByAdminId
+          ? _value.rejectedByAdminId
+          : rejectedByAdminId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      academicYear: null == academicYear
+          ? _value.academicYear
+          : academicYear // ignore: cast_nullable_to_non_nullable
+              as String,
+      startDate: freezed == startDate
+          ? _value.startDate
+          : startDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      endDate: freezed == endDate
+          ? _value.endDate
+          : endDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      actualEndDate: freezed == actualEndDate
+          ? _value.actualEndDate
+          : actualEndDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      totalWeeks: null == totalWeeks
+          ? _value.totalWeeks
+          : totalWeeks // ignore: cast_nullable_to_non_nullable
+              as int,
+      weeksCompleted: null == weeksCompleted
+          ? _value.weeksCompleted
+          : weeksCompleted // ignore: cast_nullable_to_non_nullable
+              as int,
+      progressPercentage: null == progressPercentage
+          ? _value.progressPercentage
+          : progressPercentage // ignore: cast_nullable_to_non_nullable
+              as double,
+      studentNotes: freezed == studentNotes
+          ? _value.studentNotes
+          : studentNotes // ignore: cast_nullable_to_non_nullable
               as String?,
       remarks: freezed == remarks
           ? _value.remarks
@@ -178,18 +270,30 @@ abstract class _$$PlacementModelImplCopyWith<$Res>
   @useResult
   $Res call(
       {String id,
-      String? studentRefPath,
-      String? companyRefPath,
-      String? supervisorRefPath,
+      String studentId,
+      String companyId,
+      String? universitySupervisorId,
       String? companySupervisorName,
       String? companySupervisorEmail,
       String? companySupervisorPhone,
-      String academicYear,
-      DateTime startDate,
-      DateTime endDate,
-      DateTime? actualEndDate,
+      String? companySupervisorId,
+      String? acceptanceLetterUrl,
+      String? acceptanceLetterFileName,
+      DateTime? letterUploadedAt,
       PlacementStatus status,
-      String? attachmentUrl,
+      String? adminNotes,
+      DateTime? approvedAt,
+      String? approvedByAdminId,
+      DateTime? rejectedAt,
+      String? rejectedByAdminId,
+      String academicYear,
+      DateTime? startDate,
+      DateTime? endDate,
+      DateTime? actualEndDate,
+      int totalWeeks,
+      int weeksCompleted,
+      double progressPercentage,
+      String? studentNotes,
       String? remarks,
       DateTime? createdAt,
       DateTime? updatedAt});
@@ -207,18 +311,30 @@ class __$$PlacementModelImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
-    Object? studentRefPath = freezed,
-    Object? companyRefPath = freezed,
-    Object? supervisorRefPath = freezed,
+    Object? studentId = null,
+    Object? companyId = null,
+    Object? universitySupervisorId = freezed,
     Object? companySupervisorName = freezed,
     Object? companySupervisorEmail = freezed,
     Object? companySupervisorPhone = freezed,
-    Object? academicYear = null,
-    Object? startDate = null,
-    Object? endDate = null,
-    Object? actualEndDate = freezed,
+    Object? companySupervisorId = freezed,
+    Object? acceptanceLetterUrl = freezed,
+    Object? acceptanceLetterFileName = freezed,
+    Object? letterUploadedAt = freezed,
     Object? status = null,
-    Object? attachmentUrl = freezed,
+    Object? adminNotes = freezed,
+    Object? approvedAt = freezed,
+    Object? approvedByAdminId = freezed,
+    Object? rejectedAt = freezed,
+    Object? rejectedByAdminId = freezed,
+    Object? academicYear = null,
+    Object? startDate = freezed,
+    Object? endDate = freezed,
+    Object? actualEndDate = freezed,
+    Object? totalWeeks = null,
+    Object? weeksCompleted = null,
+    Object? progressPercentage = null,
+    Object? studentNotes = freezed,
     Object? remarks = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
@@ -228,17 +344,17 @@ class __$$PlacementModelImplCopyWithImpl<$Res>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      studentRefPath: freezed == studentRefPath
-          ? _value.studentRefPath
-          : studentRefPath // ignore: cast_nullable_to_non_nullable
-              as String?,
-      companyRefPath: freezed == companyRefPath
-          ? _value.companyRefPath
-          : companyRefPath // ignore: cast_nullable_to_non_nullable
-              as String?,
-      supervisorRefPath: freezed == supervisorRefPath
-          ? _value.supervisorRefPath
-          : supervisorRefPath // ignore: cast_nullable_to_non_nullable
+      studentId: null == studentId
+          ? _value.studentId
+          : studentId // ignore: cast_nullable_to_non_nullable
+              as String,
+      companyId: null == companyId
+          ? _value.companyId
+          : companyId // ignore: cast_nullable_to_non_nullable
+              as String,
+      universitySupervisorId: freezed == universitySupervisorId
+          ? _value.universitySupervisorId
+          : universitySupervisorId // ignore: cast_nullable_to_non_nullable
               as String?,
       companySupervisorName: freezed == companySupervisorName
           ? _value.companySupervisorName
@@ -252,29 +368,77 @@ class __$$PlacementModelImplCopyWithImpl<$Res>
           ? _value.companySupervisorPhone
           : companySupervisorPhone // ignore: cast_nullable_to_non_nullable
               as String?,
-      academicYear: null == academicYear
-          ? _value.academicYear
-          : academicYear // ignore: cast_nullable_to_non_nullable
-              as String,
-      startDate: null == startDate
-          ? _value.startDate
-          : startDate // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      endDate: null == endDate
-          ? _value.endDate
-          : endDate // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      actualEndDate: freezed == actualEndDate
-          ? _value.actualEndDate
-          : actualEndDate // ignore: cast_nullable_to_non_nullable
+      companySupervisorId: freezed == companySupervisorId
+          ? _value.companySupervisorId
+          : companySupervisorId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      acceptanceLetterUrl: freezed == acceptanceLetterUrl
+          ? _value.acceptanceLetterUrl
+          : acceptanceLetterUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      acceptanceLetterFileName: freezed == acceptanceLetterFileName
+          ? _value.acceptanceLetterFileName
+          : acceptanceLetterFileName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      letterUploadedAt: freezed == letterUploadedAt
+          ? _value.letterUploadedAt
+          : letterUploadedAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
       status: null == status
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as PlacementStatus,
-      attachmentUrl: freezed == attachmentUrl
-          ? _value.attachmentUrl
-          : attachmentUrl // ignore: cast_nullable_to_non_nullable
+      adminNotes: freezed == adminNotes
+          ? _value.adminNotes
+          : adminNotes // ignore: cast_nullable_to_non_nullable
+              as String?,
+      approvedAt: freezed == approvedAt
+          ? _value.approvedAt
+          : approvedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      approvedByAdminId: freezed == approvedByAdminId
+          ? _value.approvedByAdminId
+          : approvedByAdminId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      rejectedAt: freezed == rejectedAt
+          ? _value.rejectedAt
+          : rejectedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      rejectedByAdminId: freezed == rejectedByAdminId
+          ? _value.rejectedByAdminId
+          : rejectedByAdminId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      academicYear: null == academicYear
+          ? _value.academicYear
+          : academicYear // ignore: cast_nullable_to_non_nullable
+              as String,
+      startDate: freezed == startDate
+          ? _value.startDate
+          : startDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      endDate: freezed == endDate
+          ? _value.endDate
+          : endDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      actualEndDate: freezed == actualEndDate
+          ? _value.actualEndDate
+          : actualEndDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      totalWeeks: null == totalWeeks
+          ? _value.totalWeeks
+          : totalWeeks // ignore: cast_nullable_to_non_nullable
+              as int,
+      weeksCompleted: null == weeksCompleted
+          ? _value.weeksCompleted
+          : weeksCompleted // ignore: cast_nullable_to_non_nullable
+              as int,
+      progressPercentage: null == progressPercentage
+          ? _value.progressPercentage
+          : progressPercentage // ignore: cast_nullable_to_non_nullable
+              as double,
+      studentNotes: freezed == studentNotes
+          ? _value.studentNotes
+          : studentNotes // ignore: cast_nullable_to_non_nullable
               as String?,
       remarks: freezed == remarks
           ? _value.remarks
@@ -297,18 +461,30 @@ class __$$PlacementModelImplCopyWithImpl<$Res>
 class _$PlacementModelImpl implements _PlacementModel {
   const _$PlacementModelImpl(
       {required this.id,
-      this.studentRefPath,
-      this.companyRefPath,
-      this.supervisorRefPath,
+      required this.studentId,
+      required this.companyId,
+      this.universitySupervisorId,
       this.companySupervisorName,
       this.companySupervisorEmail,
       this.companySupervisorPhone,
+      this.companySupervisorId,
+      this.acceptanceLetterUrl,
+      this.acceptanceLetterFileName,
+      this.letterUploadedAt,
+      this.status = PlacementStatus.pending,
+      this.adminNotes,
+      this.approvedAt,
+      this.approvedByAdminId,
+      this.rejectedAt,
+      this.rejectedByAdminId,
       required this.academicYear,
-      required this.startDate,
-      required this.endDate,
+      this.startDate,
+      this.endDate,
       this.actualEndDate,
-      this.status = PlacementStatus.active,
-      this.attachmentUrl,
+      this.totalWeeks = 12,
+      this.weeksCompleted = 0,
+      this.progressPercentage = 0.0,
+      this.studentNotes,
       this.remarks,
       this.createdAt,
       this.updatedAt});
@@ -319,12 +495,13 @@ class _$PlacementModelImpl implements _PlacementModel {
   @override
   final String id;
   @override
-  final String? studentRefPath;
+  final String studentId;
   @override
-  final String? companyRefPath;
+  final String companyId;
   @override
-  final String? supervisorRefPath;
-// Company supervisor details
+  final String? universitySupervisorId;
+// Linked from student's currentSupervisorId
+// Company supervisor details (from acceptance letter)
   @override
   final String? companySupervisorName;
   @override
@@ -332,20 +509,56 @@ class _$PlacementModelImpl implements _PlacementModel {
   @override
   final String? companySupervisorPhone;
   @override
-  final String academicYear;
+  final String? companySupervisorId;
+// Will be set when company supervisor creates account
+// Acceptance letter
   @override
-  final DateTime startDate;
+  final String? acceptanceLetterUrl;
   @override
-  final DateTime endDate;
+  final String? acceptanceLetterFileName;
   @override
-  final DateTime? actualEndDate;
+  final DateTime? letterUploadedAt;
+// Status & approval
   @override
   @JsonKey()
   final PlacementStatus status;
   @override
-  final String? attachmentUrl;
+  final String? adminNotes;
+// Rejection reason or other notes
+  @override
+  final DateTime? approvedAt;
+  @override
+  final String? approvedByAdminId;
+  @override
+  final DateTime? rejectedAt;
+  @override
+  final String? rejectedByAdminId;
+// Internship timeline
+  @override
+  final String academicYear;
+  @override
+  final DateTime? startDate;
+  @override
+  final DateTime? endDate;
+  @override
+  final DateTime? actualEndDate;
+  @override
+  @JsonKey()
+  final int totalWeeks;
+// Default 12 weeks
+  @override
+  @JsonKey()
+  final int weeksCompleted;
+  @override
+  @JsonKey()
+  final double progressPercentage;
+// Additional info
+  @override
+  final String? studentNotes;
+// Why they chose this company
   @override
   final String? remarks;
+// Timestamps
   @override
   final DateTime? createdAt;
   @override
@@ -353,7 +566,7 @@ class _$PlacementModelImpl implements _PlacementModel {
 
   @override
   String toString() {
-    return 'PlacementModel(id: $id, studentRefPath: $studentRefPath, companyRefPath: $companyRefPath, supervisorRefPath: $supervisorRefPath, companySupervisorName: $companySupervisorName, companySupervisorEmail: $companySupervisorEmail, companySupervisorPhone: $companySupervisorPhone, academicYear: $academicYear, startDate: $startDate, endDate: $endDate, actualEndDate: $actualEndDate, status: $status, attachmentUrl: $attachmentUrl, remarks: $remarks, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'PlacementModel(id: $id, studentId: $studentId, companyId: $companyId, universitySupervisorId: $universitySupervisorId, companySupervisorName: $companySupervisorName, companySupervisorEmail: $companySupervisorEmail, companySupervisorPhone: $companySupervisorPhone, companySupervisorId: $companySupervisorId, acceptanceLetterUrl: $acceptanceLetterUrl, acceptanceLetterFileName: $acceptanceLetterFileName, letterUploadedAt: $letterUploadedAt, status: $status, adminNotes: $adminNotes, approvedAt: $approvedAt, approvedByAdminId: $approvedByAdminId, rejectedAt: $rejectedAt, rejectedByAdminId: $rejectedByAdminId, academicYear: $academicYear, startDate: $startDate, endDate: $endDate, actualEndDate: $actualEndDate, totalWeeks: $totalWeeks, weeksCompleted: $weeksCompleted, progressPercentage: $progressPercentage, studentNotes: $studentNotes, remarks: $remarks, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -362,18 +575,38 @@ class _$PlacementModelImpl implements _PlacementModel {
         (other.runtimeType == runtimeType &&
             other is _$PlacementModelImpl &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.studentRefPath, studentRefPath) ||
-                other.studentRefPath == studentRefPath) &&
-            (identical(other.companyRefPath, companyRefPath) ||
-                other.companyRefPath == companyRefPath) &&
-            (identical(other.supervisorRefPath, supervisorRefPath) ||
-                other.supervisorRefPath == supervisorRefPath) &&
+            (identical(other.studentId, studentId) ||
+                other.studentId == studentId) &&
+            (identical(other.companyId, companyId) ||
+                other.companyId == companyId) &&
+            (identical(other.universitySupervisorId, universitySupervisorId) ||
+                other.universitySupervisorId == universitySupervisorId) &&
             (identical(other.companySupervisorName, companySupervisorName) ||
                 other.companySupervisorName == companySupervisorName) &&
             (identical(other.companySupervisorEmail, companySupervisorEmail) ||
                 other.companySupervisorEmail == companySupervisorEmail) &&
             (identical(other.companySupervisorPhone, companySupervisorPhone) ||
                 other.companySupervisorPhone == companySupervisorPhone) &&
+            (identical(other.companySupervisorId, companySupervisorId) ||
+                other.companySupervisorId == companySupervisorId) &&
+            (identical(other.acceptanceLetterUrl, acceptanceLetterUrl) ||
+                other.acceptanceLetterUrl == acceptanceLetterUrl) &&
+            (identical(
+                    other.acceptanceLetterFileName, acceptanceLetterFileName) ||
+                other.acceptanceLetterFileName == acceptanceLetterFileName) &&
+            (identical(other.letterUploadedAt, letterUploadedAt) ||
+                other.letterUploadedAt == letterUploadedAt) &&
+            (identical(other.status, status) || other.status == status) &&
+            (identical(other.adminNotes, adminNotes) ||
+                other.adminNotes == adminNotes) &&
+            (identical(other.approvedAt, approvedAt) ||
+                other.approvedAt == approvedAt) &&
+            (identical(other.approvedByAdminId, approvedByAdminId) ||
+                other.approvedByAdminId == approvedByAdminId) &&
+            (identical(other.rejectedAt, rejectedAt) ||
+                other.rejectedAt == rejectedAt) &&
+            (identical(other.rejectedByAdminId, rejectedByAdminId) ||
+                other.rejectedByAdminId == rejectedByAdminId) &&
             (identical(other.academicYear, academicYear) ||
                 other.academicYear == academicYear) &&
             (identical(other.startDate, startDate) ||
@@ -381,9 +614,14 @@ class _$PlacementModelImpl implements _PlacementModel {
             (identical(other.endDate, endDate) || other.endDate == endDate) &&
             (identical(other.actualEndDate, actualEndDate) ||
                 other.actualEndDate == actualEndDate) &&
-            (identical(other.status, status) || other.status == status) &&
-            (identical(other.attachmentUrl, attachmentUrl) ||
-                other.attachmentUrl == attachmentUrl) &&
+            (identical(other.totalWeeks, totalWeeks) ||
+                other.totalWeeks == totalWeeks) &&
+            (identical(other.weeksCompleted, weeksCompleted) ||
+                other.weeksCompleted == weeksCompleted) &&
+            (identical(other.progressPercentage, progressPercentage) ||
+                other.progressPercentage == progressPercentage) &&
+            (identical(other.studentNotes, studentNotes) ||
+                other.studentNotes == studentNotes) &&
             (identical(other.remarks, remarks) || other.remarks == remarks) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
@@ -393,24 +631,37 @@ class _$PlacementModelImpl implements _PlacementModel {
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      studentRefPath,
-      companyRefPath,
-      supervisorRefPath,
-      companySupervisorName,
-      companySupervisorEmail,
-      companySupervisorPhone,
-      academicYear,
-      startDate,
-      endDate,
-      actualEndDate,
-      status,
-      attachmentUrl,
-      remarks,
-      createdAt,
-      updatedAt);
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        id,
+        studentId,
+        companyId,
+        universitySupervisorId,
+        companySupervisorName,
+        companySupervisorEmail,
+        companySupervisorPhone,
+        companySupervisorId,
+        acceptanceLetterUrl,
+        acceptanceLetterFileName,
+        letterUploadedAt,
+        status,
+        adminNotes,
+        approvedAt,
+        approvedByAdminId,
+        rejectedAt,
+        rejectedByAdminId,
+        academicYear,
+        startDate,
+        endDate,
+        actualEndDate,
+        totalWeeks,
+        weeksCompleted,
+        progressPercentage,
+        studentNotes,
+        remarks,
+        createdAt,
+        updatedAt
+      ]);
 
   @JsonKey(ignore: true)
   @override
@@ -430,18 +681,30 @@ class _$PlacementModelImpl implements _PlacementModel {
 abstract class _PlacementModel implements PlacementModel {
   const factory _PlacementModel(
       {required final String id,
-      final String? studentRefPath,
-      final String? companyRefPath,
-      final String? supervisorRefPath,
+      required final String studentId,
+      required final String companyId,
+      final String? universitySupervisorId,
       final String? companySupervisorName,
       final String? companySupervisorEmail,
       final String? companySupervisorPhone,
-      required final String academicYear,
-      required final DateTime startDate,
-      required final DateTime endDate,
-      final DateTime? actualEndDate,
+      final String? companySupervisorId,
+      final String? acceptanceLetterUrl,
+      final String? acceptanceLetterFileName,
+      final DateTime? letterUploadedAt,
       final PlacementStatus status,
-      final String? attachmentUrl,
+      final String? adminNotes,
+      final DateTime? approvedAt,
+      final String? approvedByAdminId,
+      final DateTime? rejectedAt,
+      final String? rejectedByAdminId,
+      required final String academicYear,
+      final DateTime? startDate,
+      final DateTime? endDate,
+      final DateTime? actualEndDate,
+      final int totalWeeks,
+      final int weeksCompleted,
+      final double progressPercentage,
+      final String? studentNotes,
       final String? remarks,
       final DateTime? createdAt,
       final DateTime? updatedAt}) = _$PlacementModelImpl;
@@ -452,32 +715,58 @@ abstract class _PlacementModel implements PlacementModel {
   @override
   String get id;
   @override
-  String? get studentRefPath;
+  String get studentId;
   @override
-  String? get companyRefPath;
+  String get companyId;
   @override
-  String? get supervisorRefPath;
-  @override // Company supervisor details
+  String? get universitySupervisorId;
+  @override // Linked from student's currentSupervisorId
+// Company supervisor details (from acceptance letter)
   String? get companySupervisorName;
   @override
   String? get companySupervisorEmail;
   @override
   String? get companySupervisorPhone;
   @override
+  String? get companySupervisorId;
+  @override // Will be set when company supervisor creates account
+// Acceptance letter
+  String? get acceptanceLetterUrl;
+  @override
+  String? get acceptanceLetterFileName;
+  @override
+  DateTime? get letterUploadedAt;
+  @override // Status & approval
+  PlacementStatus get status;
+  @override
+  String? get adminNotes;
+  @override // Rejection reason or other notes
+  DateTime? get approvedAt;
+  @override
+  String? get approvedByAdminId;
+  @override
+  DateTime? get rejectedAt;
+  @override
+  String? get rejectedByAdminId;
+  @override // Internship timeline
   String get academicYear;
   @override
-  DateTime get startDate;
+  DateTime? get startDate;
   @override
-  DateTime get endDate;
+  DateTime? get endDate;
   @override
   DateTime? get actualEndDate;
   @override
-  PlacementStatus get status;
+  int get totalWeeks;
+  @override // Default 12 weeks
+  int get weeksCompleted;
   @override
-  String? get attachmentUrl;
-  @override
+  double get progressPercentage;
+  @override // Additional info
+  String? get studentNotes;
+  @override // Why they chose this company
   String? get remarks;
-  @override
+  @override // Timestamps
   DateTime? get createdAt;
   @override
   DateTime? get updatedAt;

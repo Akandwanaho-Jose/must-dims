@@ -8,36 +8,62 @@ part 'logbook_entry_model.g.dart';
 class LogbookEntryModel with _$LogbookEntryModel {
   const factory LogbookEntryModel({
     String? id,
-    required String studentRefPath,
-    required String placementRefPath,
-    required String supervisorId,
-    required DateTime date,
-    required int dayNumber,
-    required String tasksPerformed,
-    String? challenges,
+    required String studentId,
+    required String placementId,
+    
+    // Week tracking
+    required int weekNumber, // 1, 2, 3... up to totalWeeks
+    required DateTime weekStartDate,
+    required DateTime weekEndDate,
+    
+    // Student submission
+    required String activitiesPerformed,
     String? skillsLearned,
+    String? challengesFaced,
     required double hoursWorked,
-    @Default('pending') String status,
-    DateTime? createdAt,
-    DateTime? updatedAt,
+    @Default([]) List<String> attachmentUrls, // Photos, documents
+    DateTime? submittedAt,
+    
+    // University supervisor review
+    @Default(false) bool isReviewedByUniversitySupervisor,
+    String? universitySupervisorComment,
+    int? universitySupervisorRating, // 1-5 stars
+    DateTime? universityReviewedAt,
+    
+    // Company supervisor review - NEW FIELDS
+    @Default(false) bool isReviewedByCompanySupervisor,
+    String? companySupervisorComment,
+    int? companySupervisorRating, // 1-5 stars
+    DateTime? companyReviewedAt,
+    
+    // Additional ratings (optional)
+    int? codeQualityRating,
+    int? problemSolvingRating,
+    int? initiativeRating,
+    int? communicationRating,
+    
+    // Status
+    @Default('draft') String status, // draft, submitted, reviewed
+    
+    // Location tracking (optional)
     double? latitude,
     double? longitude,
-    String? photoUrl,
-    String? supervisorComment,
-    DateTime? approvedAt,
+    
+    // Timestamps
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) = _LogbookEntryModel;
 
   factory LogbookEntryModel.fromJson(Map<String, dynamic> json) =>
       _$LogbookEntryModelFromJson(json);
 
-  // ── Timestamp-safe fromFirestore (static factory)
+  // ── Timestamp-safe fromFirestore
   static LogbookEntryModel fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc,
     SnapshotOptions? options,
   ) {
     final data = doc.data() ?? {};
 
-    // Helper to safely convert Timestamp / string to DateTime
     DateTime? parseDate(dynamic value) {
       if (value == null) return null;
       if (value is Timestamp) return value.toDate();
@@ -49,35 +75,42 @@ class LogbookEntryModel with _$LogbookEntryModel {
     return LogbookEntryModel.fromJson({
       ...data,
       'id': doc.id,
-      'date': parseDate(data['date'])?.toIso8601String() ?? DateTime.now().toIso8601String(),
+      'weekStartDate': parseDate(data['weekStartDate'])?.toIso8601String() ?? DateTime.now().toIso8601String(),
+      'weekEndDate': parseDate(data['weekEndDate'])?.toIso8601String() ?? DateTime.now().toIso8601String(),
+      'submittedAt': parseDate(data['submittedAt'])?.toIso8601String(),
+      'universityReviewedAt': parseDate(data['universityReviewedAt'])?.toIso8601String(),
+      'companyReviewedAt': parseDate(data['companyReviewedAt'])?.toIso8601String(),
       'createdAt': parseDate(data['createdAt'])?.toIso8601String(),
       'updatedAt': parseDate(data['updatedAt'])?.toIso8601String(),
-      'approvedAt': parseDate(data['approvedAt'])?.toIso8601String(),
     });
   }
 }
 
-// ── Extension for toFirestore (instance method)
+// ── Extension for toFirestore
 extension LogbookEntryModelFirestore on LogbookEntryModel {
   Map<String, dynamic> toFirestore() {
-    return {
-      'studentRefPath': studentRefPath,
-      'placementRefPath': placementRefPath,
-      'supervisorId': supervisorId,
-      'date': Timestamp.fromDate(date),
-      'dayNumber': dayNumber,
-      'tasksPerformed': tasksPerformed,
-      'challenges': challenges,
-      'skillsLearned': skillsLearned,
-      'hoursWorked': hoursWorked,
-      'status': status,
-      'latitude': latitude,
-      'longitude': longitude,
-      'photoUrl': photoUrl,
-      'supervisorComment': supervisorComment,
-      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-      if (approvedAt != null) 'approvedAt': Timestamp.fromDate(approvedAt!),
-    };
+    final json = toJson();
+    json.remove('id');
+
+    // Convert DateTimes to Timestamps
+    json['weekStartDate'] = Timestamp.fromDate(weekStartDate);
+    json['weekEndDate'] = Timestamp.fromDate(weekEndDate);
+    
+    if (submittedAt != null) {
+      json['submittedAt'] = Timestamp.fromDate(submittedAt!);
+    }
+    if (universityReviewedAt != null) {
+      json['universityReviewedAt'] = Timestamp.fromDate(universityReviewedAt!);
+    }
+    if (companyReviewedAt != null) {
+      json['companyReviewedAt'] = Timestamp.fromDate(companyReviewedAt!);
+    }
+    if (createdAt != null) {
+      json['createdAt'] = Timestamp.fromDate(createdAt!);
+    }
+    
+    json['updatedAt'] = FieldValue.serverTimestamp();
+
+    return json;
   }
 }

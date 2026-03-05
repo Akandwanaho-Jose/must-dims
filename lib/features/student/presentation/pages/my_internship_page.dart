@@ -2,8 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dims/features/student/controllers/student_controllers.dart';
-import 'package:dims/features/placements/data/models/placement_model.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+
+import '../../controllers/student_controllers.dart';
+import '../../../placements/data/models/placement_model.dart';
 
 class MyInternshipPage extends ConsumerWidget {
   const MyInternshipPage({super.key});
@@ -23,28 +26,24 @@ class MyInternshipPage extends ConsumerWidget {
           ref.invalidate(currentSupervisorProvider);
         },
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
           physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Academic Supervisor Section (NEW)
+              // Academic Supervisor Section
               _buildAcademicSupervisorCard(context, supervisorAsync, theme),
-              
               const SizedBox(height: 16),
-              
+
               // Placement Information
               placementAsync.when(
                 data: (placement) {
                   if (placement == null) {
-                    return _buildNoPlacementCard(theme);
+                    // ✅ Bug 8 Fix: Show actionable prompt instead of dead-end card
+                    return _buildNoPlacementCard(context, theme);
                   }
                   return _buildPlacementContent(
-                    context,
-                    placement,
-                    companyAsync,
-                    theme,
-                  );
+                      context, placement, companyAsync, theme);
                 },
                 loading: () => const Center(
                   child: Padding(
@@ -52,7 +51,8 @@ class MyInternshipPage extends ConsumerWidget {
                     child: CircularProgressIndicator(),
                   ),
                 ),
-                error: (error, stack) => _buildErrorCard(context, ref, error),
+                error: (error, _) =>
+                    _buildErrorCard(context, ref, error),
               ),
             ],
           ),
@@ -61,16 +61,15 @@ class MyInternshipPage extends ConsumerWidget {
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // NEW: Academic Supervisor Card
-  // ══════════════════════════════════════════════════════════════════════════
-  
+  // ── Academic Supervisor Card ─────────────────────────────────────────────
+
   Widget _buildAcademicSupervisorCard(
     BuildContext context,
     AsyncValue supervisorAsync,
     ThemeData theme,
   ) {
     return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -78,58 +77,53 @@ class MyInternshipPage extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.school,
-                  color: theme.colorScheme.primary,
-                  size: 32,
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.school,
+                      color: theme.colorScheme.primary, size: 20),
                 ),
                 const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Academic Supervisor',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                Text(
+                  'Academic Supervisor',
+                  style: theme.textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            const Divider(),
+            const Divider(height: 1),
             const SizedBox(height: 16),
-            
             supervisorAsync.when(
               data: (supervisor) {
                 if (supervisor == null) {
-                  return _buildNoSupervisorAssigned(theme);
+                  return _buildNoSupervisorInfo(theme);
                 }
-                
                 return Column(
                   children: [
                     _InfoRow(
-                      icon: Icons.person,
-                      label: 'Name',
-                      value: supervisor.fullName,
-                    ),
+                        icon: Icons.person_outline,
+                        label: 'Name',
+                        value: supervisor.fullName),
                     const SizedBox(height: 12),
                     _InfoRow(
-                      icon: Icons.business,
-                      label: 'Department',
-                      value: supervisor.department,
-                    ),
+                        icon: Icons.business_outlined,
+                        label: 'Department',
+                        value: supervisor.department),
                     const SizedBox(height: 12),
-                    _CopyableInfoRow(
-                      icon: Icons.email,
-                      label: 'Email',
-                      value: supervisor.email,
-                    ),
+                    _CopyableRow(
+                        icon: Icons.email_outlined,
+                        label: 'Email',
+                        value: supervisor.email),
                     if (supervisor.phoneNumber != null) ...[
                       const SizedBox(height: 12),
-                      _CopyableInfoRow(
-                        icon: Icons.phone,
-                        label: 'Phone',
-                        value: supervisor.phoneNumber!,
-                      ),
+                      _CopyableRow(
+                          icon: Icons.phone_outlined,
+                          label: 'Phone',
+                          value: supervisor.phoneNumber!),
                     ],
                   ],
                 );
@@ -140,7 +134,7 @@ class MyInternshipPage extends ConsumerWidget {
                   child: CircularProgressIndicator(),
                 ),
               ),
-              error: (error, stack) => _buildSupervisorError(theme, error),
+              error: (_, __) => _buildSupervisorError(theme),
             ),
           ],
         ),
@@ -148,26 +142,25 @@ class MyInternshipPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildNoSupervisorAssigned(ThemeData theme) {
+  Widget _buildNoSupervisorInfo(ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
+        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.info_outline,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(width: 12),
+          Icon(Icons.info_outline,
+              color: theme.colorScheme.onSurfaceVariant, size: 18),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'No academic supervisor assigned yet. Please contact your department.',
+              'No academic supervisor assigned yet. Contact your department.',
               style: TextStyle(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+                  fontSize: 13,
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.4),
             ),
           ),
         ],
@@ -175,22 +168,23 @@ class MyInternshipPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildSupervisorError(ThemeData theme, Object error) {
+  Widget _buildSupervisorError(ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.red.shade50,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.red.shade200),
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline, color: Colors.red.shade700),
-          const SizedBox(width: 12),
+          Icon(Icons.error_outline, color: Colors.red.shade700, size: 18),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               'Error loading supervisor information',
-              style: TextStyle(color: Colors.red.shade700),
+              style:
+                  TextStyle(fontSize: 13, color: Colors.red.shade700),
             ),
           ),
         ],
@@ -198,9 +192,61 @@ class MyInternshipPage extends ConsumerWidget {
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // Placement Content
-  // ══════════════════════════════════════════════════════════════════════════
+  // ── No placement card ────────────────────────────────────────────────────
+
+  /// ✅ Bug 8 Fix: Shows an actionable card instead of a dead-end message
+  Widget _buildNoPlacementCard(BuildContext context, ThemeData theme) {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.business_outlined,
+                  size: 48, color: Colors.blue.shade400),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'No Active Placement',
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'You haven\'t started the internship process yet. Upload your company acceptance letter to get started.',
+              style: TextStyle(
+                  fontSize: 13,
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.5),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () => context.go('/student/upload-letter'),
+                icon: const Icon(Icons.upload_file_rounded),
+                label: const Text('Upload Acceptance Letter'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Placement content ────────────────────────────────────────────────────
 
   Widget _buildPlacementContent(
     BuildContext context,
@@ -212,199 +258,201 @@ class MyInternshipPage extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Status badge
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 6,
-          ),
-          decoration: BoxDecoration(
-            color: _getStatusColor(placement.status),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            placement.status.name.toUpperCase(),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
+        _StatusBadge(status: placement.status),
         const SizedBox(height: 16),
 
         // Company info card
         Card(
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14)),
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.business,
-                      color: theme.colorScheme.primary,
-                      size: 32,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Company',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          companyAsync.when(
-                            data: (company) => Text(
-                              company?.name ?? 'Loading...',
-                              style: theme.textTheme.bodyLarge,
-                            ),
-                            loading: () => const Text('Loading...'),
-                            error: (_, __) => const Text('Error loading company'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                _CardHeader(
+                    icon: Icons.business, title: 'Company Information'),
+                const SizedBox(height: 16),
+                const Divider(height: 1),
+                const SizedBox(height: 16),
+                companyAsync.when(
+                  data: (company) => Column(
+                    children: [
+                      _InfoRow(
+                          icon: Icons.store_outlined,
+                          label: 'Name',
+                          value: company?.name ?? 'Unknown'),
+                      const SizedBox(height: 12),
+                      _InfoRow(
+                          icon: Icons.category_outlined,
+                          label: 'Industry',
+                          value: company?.industry ?? 'N/A'),
+                      const SizedBox(height: 12),
+                      _InfoRow(
+                          icon: Icons.location_on_outlined,
+                          label: 'Location',
+                          value: company?.location ?? 'N/A'),
+                    ],
+                  ),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (_, __) =>
+                      const Text('Error loading company details'),
                 ),
-                if (placement.companySupervisorName != null) ...[
-                  const SizedBox(height: 16),
-                  const Divider(),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Company Supervisor',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _InfoRow(
-                    icon: Icons.person,
-                    label: 'Name',
-                    value: placement.companySupervisorName!,
-                  ),
-                  if (placement.companySupervisorEmail != null) ...[
-                    const SizedBox(height: 12),
-                    _CopyableInfoRow(
-                      icon: Icons.email,
-                      label: 'Email',
-                      value: placement.companySupervisorEmail!,
-                    ),
-                  ],
-                  if (placement.companySupervisorPhone != null) ...[
-                    const SizedBox(height: 12),
-                    _CopyableInfoRow(
-                      icon: Icons.phone,
-                      label: 'Phone',
-                      value: placement.companySupervisorPhone!,
-                    ),
-                  ],
-                ],
               ],
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
 
-        // Duration card
+        // Company Supervisor card
         Card(
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14)),
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Duration',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                _CardHeader(
+                    icon: Icons.supervisor_account,
+                    title: 'Company Supervisor'),
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _InfoTile(
-                        icon: Icons.calendar_today,
-                        label: 'Start Date',
-                        value: _formatDate(placement.startDate),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _InfoTile(
-                        icon: Icons.event,
-                        label: 'End Date',
-                        value: _formatDate(placement.endDate),
-                      ),
-                    ),
-                  ],
-                ),
+                const Divider(height: 1),
                 const SizedBox(height: 16),
-                _InfoTile(
-                  icon: Icons.school,
-                  label: 'Academic Year',
-                  value: placement.academicYear,
-                ),
-                if (placement.actualEndDate != null) ...[
-                  const SizedBox(height: 16),
-                  _InfoTile(
-                    icon: Icons.check_circle,
-                    label: 'Actual End Date',
-                    value: _formatDate(placement.actualEndDate!),
-                  ),
+                _InfoRow(
+                    icon: Icons.badge_outlined,
+                    label: 'Name',
+                    value: placement.companySupervisorName ?? 'N/A'),
+                const SizedBox(height: 12),
+                _CopyableRow(
+                    icon: Icons.email_outlined,
+                    label: 'Email',
+                    value: placement.companySupervisorEmail ?? 'N/A'),
+                if (placement.companySupervisorPhone != null) ...[
+                  const SizedBox(height: 12),
+                  _CopyableRow(
+                      icon: Icons.phone_outlined,
+                      label: 'Phone',
+                      value: placement.companySupervisorPhone!),
                 ],
               ],
             ),
           ),
         ),
+        const SizedBox(height: 12),
 
-        if (placement.remarks != null) ...[
-          const SizedBox(height: 16),
+        // Timeline card (only when relevant)
+        if (placement.status == PlacementStatus.approved ||
+            placement.status == PlacementStatus.active ||
+            placement.status == PlacementStatus.completed) ...[
           Card(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14)),
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Remarks',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                  _CardHeader(
+                      icon: Icons.schedule, title: 'Internship Timeline'),
+                  const SizedBox(height: 16),
+                  const Divider(height: 1),
+                  const SizedBox(height: 16),
+                  if (placement.startDate != null)
+                    _InfoRow(
+                        icon: Icons.play_arrow_outlined,
+                        label: 'Start Date',
+                        value: DateFormat('MMM dd, yyyy')
+                            .format(placement.startDate!)),
+                  if (placement.startDate != null)
+                    const SizedBox(height: 12),
+                  if (placement.endDate != null)
+                    _InfoRow(
+                        icon: Icons.stop_circle_outlined,
+                        label: 'End Date',
+                        value: DateFormat('MMM dd, yyyy')
+                            .format(placement.endDate!)),
+                  if (placement.endDate != null)
+                    const SizedBox(height: 12),
+                  _InfoRow(
+                      icon: Icons.timelapse_outlined,
+                      label: 'Duration',
+                      value: '${placement.totalWeeks} weeks'),
+                  if (placement.status == PlacementStatus.active) ...[
+                    const SizedBox(height: 16),
+                    const Divider(height: 1),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${placement.weeksCompleted} / ${placement.totalWeeks} weeks',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w600),
+                        ),
+                        Text(
+                          '${placement.progressPercentage.toStringAsFixed(0)}%',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    placement.remarks!,
-                    style: theme.textTheme.bodyMedium,
-                  ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: placement.weeksCompleted /
+                            placement.totalWeeks,
+                        minHeight: 10,
+                        backgroundColor: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
           ),
+          const SizedBox(height: 12),
         ],
 
-        if (placement.attachmentUrl != null) ...[
-          const SizedBox(height: 16),
+        // Acceptance letter
+        if (placement.acceptanceLetterUrl != null)
           Card(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14)),
             child: ListTile(
-              leading: const Icon(Icons.attachment),
-              title: const Text('Attachment Available'),
+              contentPadding: const EdgeInsets.all(16),
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.picture_as_pdf,
+                    color: Colors.red.shade600),
+              ),
+              title: const Text('Acceptance Letter',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
               subtitle: Text(
-                placement.attachmentUrl!,
+                placement.acceptanceLetterFileName ?? 'View document',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 12),
               ),
               trailing: IconButton(
-                icon: const Icon(Icons.copy),
+                icon: const Icon(Icons.copy_outlined),
+                tooltip: 'Copy link',
                 onPressed: () {
-                  Clipboard.setData(ClipboardData(text: placement.attachmentUrl!));
+                  Clipboard.setData(
+                      ClipboardData(text: placement.acceptanceLetterUrl!));
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('URL copied to clipboard'),
+                      content: Text('Link copied to clipboard'),
                       duration: Duration(seconds: 2),
                     ),
                   );
@@ -412,119 +460,163 @@ class MyInternshipPage extends ConsumerWidget {
               ),
             ),
           ),
+
+        const SizedBox(height: 16),
+
+        // Action buttons
+        if (placement.status == PlacementStatus.approved)
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () => context.go('/student/start-internship'),
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: const Text('Start My Internship'),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+
+        if (placement.status == PlacementStatus.rejected) ...[
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () => context.go('/student/upload-letter'),
+              icon: const Icon(Icons.upload_file_rounded),
+              label: const Text('Upload New Letter'),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.red.shade600,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
         ],
+
+        const SizedBox(height: 20),
       ],
     );
   }
 
-  Widget _buildNoPlacementCard(ThemeData theme) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          children: [
-            Icon(
-              Icons.business_outlined,
-              size: 64,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No Active Placement',
-              style: theme.textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'You haven\'t been assigned to a company placement yet',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // ── Error card ───────────────────────────────────────────────────────────
 
-  Widget _buildErrorCard(BuildContext context, WidgetRef ref, Object error) {
+  Widget _buildErrorCard(
+      BuildContext context, WidgetRef ref, Object error) {
     return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Padding(
-        padding: const EdgeInsets.all(40),
+        padding: const EdgeInsets.all(28),
         child: Column(
           children: [
             const Icon(Icons.error_outline, size: 48, color: Colors.red),
             const SizedBox(height: 16),
-            Text('Error: $error'),
+            Text('Error loading placement: $error',
+                textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            ElevatedButton(
+            ElevatedButton.icon(
               onPressed: () => ref.invalidate(currentPlacementProvider),
-              child: const Text('Retry'),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
             ),
           ],
         ),
       ),
     );
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // Helper Methods
-  // ══════════════════════════════════════════════════════════════════════════
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
-  }
-
-  Color _getStatusColor(PlacementStatus status) {
-    switch (status) {
-      case PlacementStatus.active:
-        return Colors.green;
-      case PlacementStatus.pending:
-        return Colors.orange;
-      case PlacementStatus.completed:
-        return Colors.blue;
-      case PlacementStatus.cancelled:
-        return Colors.red;
-      case PlacementStatus.extended:
-        return Colors.purple;
-    }
-  }
 }
 
-// ══════════════════════════════════════════════════════════════════════════
-// Reusable Widgets
-// ══════════════════════════════════════════════════════════════════════════
+// ============================================================================
+// REUSABLE WIDGETS
+// ============================================================================
 
-class _InfoTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
+class _StatusBadge extends StatelessWidget {
+  final PlacementStatus status;
 
-  const _InfoTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
+  const _StatusBadge({required this.status});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    Color color;
+    String label;
+
+    switch (status) {
+      case PlacementStatus.pending:
+        color = Colors.orange;
+        label = 'PENDING REVIEW';
+        break;
+      case PlacementStatus.approved:
+        color = Colors.green;
+        label = 'APPROVED';
+        break;
+      case PlacementStatus.rejected:
+        color = Colors.red;
+        label = 'REJECTED';
+        break;
+      case PlacementStatus.active:
+        color = Colors.blue;
+        label = 'ACTIVE';
+        break;
+      case PlacementStatus.completed:
+        color = Colors.green;
+        label = 'COMPLETED';
+        break;
+      case PlacementStatus.cancelled:
+        color = Colors.red;
+        label = 'CANCELLED';
+        break;
+      case PlacementStatus.terminated:
+        color = Colors.red;
+        label = 'TERMINATED';
+        break;
+      case PlacementStatus.extended:
+        color = Colors.purple;
+        label = 'EXTENDED';
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.4)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+            fontSize: 11, fontWeight: FontWeight.bold, color: color),
+      ),
+    );
+  }
+}
+
+class _CardHeader extends StatelessWidget {
+  final IconData icon;
+  final String title;
+
+  const _CardHeader({required this.icon, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
       children: [
-        Row(
-          children: [
-            Icon(icon, size: 16),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon,
+              color: Theme.of(context).colorScheme.primary, size: 18),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(width: 12),
         Text(
-          value,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          title,
+          style:
+              const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
         ),
       ],
     );
@@ -536,37 +628,29 @@ class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _InfoRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
+  const _InfoRow(
+      {required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
+        Icon(icon,
+            size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
+              Text(label,
+                  style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant)),
               const SizedBox(height: 2),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 15,
-                ),
-              ),
+              Text(value,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w500, fontSize: 14)),
             ],
           ),
         ),
@@ -575,16 +659,13 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-class _CopyableInfoRow extends StatelessWidget {
+class _CopyableRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
 
-  const _CopyableInfoRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
+  const _CopyableRow(
+      {required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -593,8 +674,9 @@ class _CopyableInfoRow extends StatelessWidget {
         Clipboard.setData(ClipboardData(text: value));
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('$label copied to clipboard'),
+            content: Text('$label copied'),
             duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
           ),
         );
       },
@@ -602,37 +684,34 @@ class _CopyableInfoRow extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
+            Icon(icon,
+                size: 18,
+                color: Theme.of(context).colorScheme.primary),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    label,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
+                  Text(label,
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant)),
                   const SizedBox(height: 2),
-                  Text(
-                    value,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 15,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
+                  Text(value,
+                      style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                          color:
+                              Theme.of(context).colorScheme.primary)),
                 ],
               ),
             ),
-            Icon(
-              Icons.copy,
-              size: 16,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            Icon(Icons.copy_outlined,
+                size: 14,
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
           ],
         ),
       ),

@@ -20,26 +20,39 @@ class _StudentEvaluationScreenState extends ConsumerState<StudentEvaluationScree
   double communicationScore = 5.0;
   String comments = '';
 
-  Future<void> _submit() async {
-    final auth = ref.read(authStateProvider).value;
-    if (auth == null) return;
+ Future<void> _submit() async {
+  final auth = ref.read(authStateProvider).value;
+  if (auth == null) return;
 
-    final eval = EvaluationModel(
-      studentId: widget.student.uid,
-      supervisorId: auth.uid,
-      performanceScore: performanceScore,
-      attendanceScore: attendanceScore,
-      communicationScore: communicationScore,
-      comments: comments,
-      createdAt: DateTime.now(),
-    );
+  // Get supervisor name
+  final supervisorName = auth.displayName ?? auth.email ?? 'Unknown Supervisor';
 
-    await ref.read(supervisorControllerProvider).submitEvaluation(eval);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Evaluation Saved')));
-      Navigator.pop(context);
-    }
+  final eval = EvaluationModel(
+    studentId: widget.student.uid,
+    placementId: widget.student.currentPlacementId ?? '', // Add placement ID
+    evaluatorType: EvaluationType.universitySupervisor,
+    evaluatorId: auth.uid,
+    evaluatorName: supervisorName,
+    finalMarks: ((performanceScore + attendanceScore + communicationScore) / 3) * 10, // Convert to /100
+    technicalSkillsRating: performanceScore,
+    workEthicRating: attendanceScore,
+    communicationRating: communicationScore,
+    problemSolvingRating: performanceScore, // Use same for now
+    initiativeRating: performanceScore, // Use same for now
+    teamworkRating: communicationScore, // Use same for now
+    daysPresent: 0, // TODO: Get actual attendance
+    daysAbsent: 0,
+    totalWorkingDays: 0,
+    overallComments: comments,
+    createdAt: DateTime.now(),
+  );
+
+  await ref.read(supervisorControllerProvider).submitEvaluation(eval);
+  if (mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Evaluation Saved')));
+    Navigator.pop(context);
   }
+}
 
   @override
   Widget build(BuildContext context) {

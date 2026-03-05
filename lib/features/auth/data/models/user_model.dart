@@ -6,7 +6,8 @@ part 'user_model.g.dart';
 
 enum UserRole { 
   student, 
-  supervisor, 
+  supervisor,      // University supervisor
+  companySupervisor, // NEW - Company supervisor
   admin 
 }
 

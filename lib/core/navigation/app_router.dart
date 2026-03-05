@@ -15,6 +15,23 @@ import 'package:dims/features/student/presentation/student_dashboard.dart';
 import 'package:dims/features/supervisor/presentation/screens/supervisor_dashboard.dart';
 import 'package:dims/features/admin/presentation/admin_dashboard.dart';
 
+// Company Supervisor imports
+import 'package:dims/features/companies/presentation/pages/setup_company_supervisor_account_page.dart';
+import 'package:dims/features/companies/presentation/pages/company_supervisor_dashboard.dart';
+import 'package:dims/features/companies/presentation/pages/student_details_page.dart';
+import 'package:dims/features/companies/presentation/pages/logbook_review_page.dart';
+import 'package:dims/features/companies/presentation/pages/final_evaluation_form_page.dart';
+
+// Admin imports
+import 'package:dims/features/admin/presentation/pages/companies_management_page.dart';
+import 'package:dims/features/admin/presentation/pages/pending_placements_page.dart';
+
+// Student imports
+import 'package:dims/features/student/presentation/pages/upload_acceptance_letter_page.dart';
+import 'package:dims/features/student/presentation/pages/my_placement_status_page.dart';
+import 'package:dims/features/student/presentation/pages/start_internship_page.dart';
+import 'package:dims/features/student/presentation/pages/enhanced_logbook_form_page.dart';
+
 // Helper provider to check if student profile is COMPLETE
 final profileCheckProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, uid) async {
   final doc = await FirebaseFirestore.instance
@@ -38,7 +55,6 @@ final profileCheckProvider = FutureProvider.family<Map<String, dynamic>, String>
   print('Program: $program');
   print('Academic Year: $academicYear');
   
-  // Profile is complete if ALL critical fields are filled AND not 'PENDING'
   final isComplete = registrationNumber != null && 
                      registrationNumber.isNotEmpty && 
                      registrationNumber != 'PENDING' &&
@@ -61,7 +77,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     redirect: (BuildContext context, GoRouterState state) async {
       final path = state.uri.path;
 
-      // Read auth state
       final authState = ref.read(authStateProvider);
       final user = authState.value;
 
@@ -74,15 +89,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         print('Approved: ${user.isApproved}');
       }
 
-      // 1. Still loading → wait
       if (authState.isLoading) {
         print('⏳ Auth still loading, staying put');
         return null;
       }
 
-      // 2. Not logged in → go to login
       if (user == null) {
-        final isPublicRoute = ['/', '/login', '/register'].contains(path);
+        final isPublicRoute = [
+          '/', 
+          '/login', 
+          '/register',
+          '/setup-company-supervisor',
+        ].contains(path) || path.startsWith('/setup-company-supervisor');
+        
         if (isPublicRoute) {
           print('✓ Public route, allow access');
           return null;
@@ -91,8 +110,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return '/login';
       }
 
-      // 3. Not approved → go to pending approval
-      if (!user.isApproved) {
+      if (!user.isApproved && user.role != UserRole.companySupervisor) {
         if (path == '/pending-approval') {
           print('✓ Already on pending approval page');
           return null;
@@ -101,12 +119,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return '/pending-approval';
       }
 
-      // 4. Role-based routing
       switch (user.role) {
         case UserRole.student:
           print('👨‍🎓 Student role detected');
           
-          // Check if profile is complete
           final profileStatus = await ref.read(profileCheckProvider(user.uid).future);
           final profileExists = profileStatus['exists'] as bool;
           final profileIsComplete = profileStatus['isComplete'] as bool;
@@ -114,7 +130,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           print('Profile exists: $profileExists');
           print('Profile complete: $profileIsComplete');
 
-          // Profile doesn't exist → redirect to complete profile
           if (!profileExists) {
             if (path == '/complete-profile') {
               print('✓ Already on complete profile page');
@@ -124,7 +139,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             return '/complete-profile';
           }
 
-          // Profile exists but incomplete → redirect to complete profile
           if (!profileIsComplete) {
             if (path == '/complete-profile') {
               print('✓ Already on complete profile page');
@@ -134,7 +148,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             return '/complete-profile';
           }
 
-          // Profile is complete → allow student routes
           if (path.startsWith('/student/')) {
             print('✓ Already in student area');
             return null;
@@ -151,6 +164,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           print('→ Redirect supervisor to /supervisor/dashboard');
           return '/supervisor/dashboard';
 
+        case UserRole.companySupervisor:
+          print('🏢 Company Supervisor role detected');
+          
+          if (path.startsWith('/company-supervisor/')) {
+            print('✓ Company supervisor in their area');
+            return null;
+          }
+          print('→ Redirect company supervisor to /company-supervisor/dashboard');
+          return '/company-supervisor/dashboard';
+
         case UserRole.admin:
           if (path.startsWith('/admin/')) {
             print('✓ Admin in their area');
@@ -165,6 +188,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
     },
     routes: [
+      // ══════════════════════════════════════════════════════════════════════
+      // PUBLIC ROUTES
+      // ══════════════════════════════════════════════════════════════════════
       GoRoute(
         path: '/',
         builder: (context, state) => const SplashPage(),
@@ -182,6 +208,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const PendingApprovalPage(),
       ),
       GoRoute(
+        path: '/setup-company-supervisor',
+        builder: (context, state) {
+          final email = state.uri.queryParameters['email'] ?? '';
+          final companyId = state.uri.queryParameters['companyId'] ?? '';
+          final companyName = state.uri.queryParameters['companyName'] ?? '';
+          final supervisorName = state.uri.queryParameters['name'];
+
+          return SetupCompanySupervisorAccountPage(
+            email: email,
+            companyId: companyId,
+            companyName: companyName,
+            supervisorName: supervisorName,
+          );
+        },
+      ),
+
+      // ══════════════════════════════════════════════════════════════════════
+      // STUDENT ROUTES
+      // ══════════════════════════════════════════════════════════════════════
+      GoRoute(
         path: '/complete-profile',
         builder: (context, state) => const CompleteProfilePage(),
       ),
@@ -190,12 +236,77 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const StudentDashboard(),
       ),
       GoRoute(
+        path: '/student/upload-letter',
+        builder: (context, state) => const UploadAcceptanceLetterPage(),
+      ),
+      GoRoute(
+        path: '/student/placement-status',
+        builder: (context, state) => const MyPlacementStatusPage(),
+      ),
+      GoRoute(
+  path: '/student/start-internship',
+  builder: (context, state) => const StartInternshipPage(),
+),
+      GoRoute(
+        path: '/student/submit-logbook',
+        builder: (context, state) => const EnhancedLogbookFormPage(),
+      ),
+
+      // ══════════════════════════════════════════════════════════════════════
+      // UNIVERSITY SUPERVISOR ROUTES
+      // ══════════════════════════════════════════════════════════════════════
+      GoRoute(
         path: '/supervisor/dashboard',
         builder: (context, state) => const SupervisorDashboard(),
       ),
+
+      // ══════════════════════════════════════════════════════════════════════
+      // COMPANY SUPERVISOR ROUTES
+      // ══════════════════════════════════════════════════════════════════════
+      GoRoute(
+        path: '/company-supervisor/dashboard',
+        builder: (context, state) => const CompanySupervisorDashboard(),
+      ),
+      GoRoute(
+        path: '/company-supervisor/student/:studentId',
+        builder: (context, state) {
+          final studentId = state.pathParameters['studentId']!;
+          return StudentDetailsPage(studentId: studentId);
+        },
+      ),
+      GoRoute(
+        path: '/company-supervisor/review-logbook/:logbookId',
+        builder: (context, state) {
+          final logbookId = state.pathParameters['logbookId']!;
+          return LogbookReviewPage(logbookId: logbookId);
+        },
+      ),
+      GoRoute(
+        path: '/company-supervisor/evaluate/:placementId/:studentId',
+        builder: (context, state) {
+          final placementId = state.pathParameters['placementId']!;
+          final studentId = state.pathParameters['studentId']!;
+          return FinalEvaluationFormPage(
+            placementId: placementId,
+            studentId: studentId,
+          );
+        },
+      ),
+
+      // ══════════════════════════════════════════════════════════════════════
+      // ADMIN ROUTES
+      // ══════════════════════════════════════════════════════════════════════
       GoRoute(
         path: '/admin/dashboard',
         builder: (context, state) => const AdminDashboard(),
+      ),
+      GoRoute(
+        path: '/admin/companies',
+        builder: (context, state) => const CompaniesManagementPage(),
+      ),
+      GoRoute(
+        path: '/admin/placements/pending',
+        builder: (context, state) => const PendingPlacementsPage(),
       ),
     ],
   );

@@ -61,6 +61,7 @@ class _PendingApprovalsPageState extends ConsumerState<PendingApprovalsPage> {
                         value: UserRole.supervisor,
                         label: Text('Supervisors'),
                       ),
+                      // Note: Company supervisors are auto-approved, so we don't show them here
                     ],
                     selected: {_filterRole},
                     onSelectionChanged: (Set<UserRole?> newSelection) {
@@ -93,10 +94,12 @@ class _PendingApprovalsPageState extends ConsumerState<PendingApprovalsPage> {
           Expanded(
             child: pendingUsersAsync.when(
               data: (users) {
-                // Apply filter
-                final filteredUsers = _filterRole == null
-                    ? users
-                    : users.where((u) => u.role == _filterRole).toList();
+                // Apply filter - exclude company supervisors as they're auto-approved
+                var filteredUsers = users.where((u) => u.role != UserRole.companySupervisor).toList();
+                
+                if (_filterRole != null) {
+                  filteredUsers = filteredUsers.where((u) => u.role == _filterRole).toList();
+                }
                 
                 if (filteredUsers.isEmpty) {
                   return Center(
@@ -284,7 +287,7 @@ class _UserApprovalCardState extends ConsumerState<_UserApprovalCard> {
                     ),
                   ),
                   child: Text(
-                    widget.user.role.name.toUpperCase(),
+                    _getRoleDisplayName(widget.user.role),
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -388,8 +391,23 @@ class _UserApprovalCardState extends ConsumerState<_UserApprovalCard> {
         return Colors.blue;
       case UserRole.supervisor:
         return Colors.green;
+      case UserRole.companySupervisor:
+        return Colors.orange;
       case UserRole.admin:
         return Colors.purple;
+    }
+  }
+
+  String _getRoleDisplayName(UserRole role) {
+    switch (role) {
+      case UserRole.student:
+        return 'STUDENT';
+      case UserRole.supervisor:
+        return 'SUPERVISOR';
+      case UserRole.companySupervisor:
+        return 'COMPANY';
+      case UserRole.admin:
+        return 'ADMIN';
     }
   }
 

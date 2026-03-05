@@ -38,17 +38,34 @@ class SupervisorController {
   }
 
   // Submit Grade/Evaluation
-  Future<void> submitEvaluation(EvaluationModel eval) async {
-    await _firestore.collection('evaluations').add({
-      'studentId': eval.studentId,
-      'supervisorId': eval.supervisorId,
-      'performanceScore': eval.performanceScore,
-      'attendanceScore': eval.attendanceScore,
-      'communicationScore': eval.communicationScore,
-      'comments': eval.comments,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-  }
+ // Submit Grade/Evaluation
+Future<void> submitEvaluation(EvaluationModel eval) async {
+  await _firestore.collection('evaluations').add({
+    'studentId': eval.studentId,
+    'placementId': eval.placementId,
+    'evaluatorType': eval.evaluatorType.name,
+    'evaluatorId': eval.evaluatorId,
+    'evaluatorName': eval.evaluatorName,
+    'finalMarks': eval.finalMarks,
+    'technicalSkillsRating': eval.technicalSkillsRating,
+    'workEthicRating': eval.workEthicRating,
+    'communicationRating': eval.communicationRating,
+    'problemSolvingRating': eval.problemSolvingRating,
+    'initiativeRating': eval.initiativeRating,
+    'teamworkRating': eval.teamworkRating,
+    'daysPresent': eval.daysPresent,
+    'daysAbsent': eval.daysAbsent,
+    'totalWorkingDays': eval.totalWorkingDays,
+    'overallComments': eval.overallComments,
+    'strengthsHighlighted': eval.strengthsHighlighted,
+    'areasForImprovement': eval.areasForImprovement,
+    'recommendationsForFutureInterns': eval.recommendationsForFutureInterns,
+    'wouldHireAgain': eval.wouldHireAgain,
+    'hiringConditions': eval.hiringConditions,
+    'createdAt': FieldValue.serverTimestamp(),
+    'submittedAt': FieldValue.serverTimestamp(),
+  });
+}
 
   // Stream for Dashboard
   Stream<List<LogbookEntryModel>> getPendingLogbooks(String supervisorId) {

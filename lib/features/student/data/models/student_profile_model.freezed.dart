@@ -21,16 +21,13 @@ StudentProfileModel _$StudentProfileModelFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$StudentProfileModel {
   String get uid => throw _privateConstructorUsedError;
-  String get fullName =>
-      throw _privateConstructorUsedError; // Added this to match your screenshot
+  String get fullName => throw _privateConstructorUsedError;
   String get registrationNumber => throw _privateConstructorUsedError;
   String get program => throw _privateConstructorUsedError;
   int get academicYear => throw _privateConstructorUsedError;
   String get currentLevel => throw _privateConstructorUsedError;
-  String? get currentPlacementId =>
-      throw _privateConstructorUsedError; // Explicitly default to null
-  String? get currentSupervisorId =>
-      throw _privateConstructorUsedError; // THIS IS THE KEY FIX
+  String? get currentPlacementId => throw _privateConstructorUsedError;
+  String? get currentSupervisorId => throw _privateConstructorUsedError;
   String get status => throw _privateConstructorUsedError;
   double get progressPercentage => throw _privateConstructorUsedError;
   StudentInternshipStatus get internshipStatus =>
@@ -281,7 +278,6 @@ class _$StudentProfileModelImpl implements _StudentProfileModel {
   final String uid;
   @override
   final String fullName;
-// Added this to match your screenshot
   @override
   final String registrationNumber;
   @override
@@ -295,11 +291,9 @@ class _$StudentProfileModelImpl implements _StudentProfileModel {
   @override
   @JsonKey()
   final String? currentPlacementId;
-// Explicitly default to null
   @override
   @JsonKey()
   final String? currentSupervisorId;
-// THIS IS THE KEY FIX
   @override
   @JsonKey()
   final String status;
@@ -405,7 +399,7 @@ abstract class _StudentProfileModel implements StudentProfileModel {
   String get uid;
   @override
   String get fullName;
-  @override // Added this to match your screenshot
+  @override
   String get registrationNumber;
   @override
   String get program;
@@ -415,9 +409,9 @@ abstract class _StudentProfileModel implements StudentProfileModel {
   String get currentLevel;
   @override
   String? get currentPlacementId;
-  @override // Explicitly default to null
+  @override
   String? get currentSupervisorId;
-  @override // THIS IS THE KEY FIX
+  @override
   String get status;
   @override
   double get progressPercentage;

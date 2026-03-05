@@ -10,50 +10,85 @@ _$LogbookEntryModelImpl _$$LogbookEntryModelImplFromJson(
         Map<String, dynamic> json) =>
     _$LogbookEntryModelImpl(
       id: json['id'] as String?,
-      studentRefPath: json['studentRefPath'] as String,
-      placementRefPath: json['placementRefPath'] as String,
-      supervisorId: json['supervisorId'] as String,
-      date: DateTime.parse(json['date'] as String),
-      dayNumber: (json['dayNumber'] as num).toInt(),
-      tasksPerformed: json['tasksPerformed'] as String,
-      challenges: json['challenges'] as String?,
+      studentId: json['studentId'] as String,
+      placementId: json['placementId'] as String,
+      weekNumber: (json['weekNumber'] as num).toInt(),
+      weekStartDate: DateTime.parse(json['weekStartDate'] as String),
+      weekEndDate: DateTime.parse(json['weekEndDate'] as String),
+      activitiesPerformed: json['activitiesPerformed'] as String,
       skillsLearned: json['skillsLearned'] as String?,
+      challengesFaced: json['challengesFaced'] as String?,
       hoursWorked: (json['hoursWorked'] as num).toDouble(),
-      status: json['status'] as String? ?? 'pending',
+      attachmentUrls: (json['attachmentUrls'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      submittedAt: json['submittedAt'] == null
+          ? null
+          : DateTime.parse(json['submittedAt'] as String),
+      isReviewedByUniversitySupervisor:
+          json['isReviewedByUniversitySupervisor'] as bool? ?? false,
+      universitySupervisorComment:
+          json['universitySupervisorComment'] as String?,
+      universitySupervisorRating:
+          (json['universitySupervisorRating'] as num?)?.toInt(),
+      universityReviewedAt: json['universityReviewedAt'] == null
+          ? null
+          : DateTime.parse(json['universityReviewedAt'] as String),
+      isReviewedByCompanySupervisor:
+          json['isReviewedByCompanySupervisor'] as bool? ?? false,
+      companySupervisorComment: json['companySupervisorComment'] as String?,
+      companySupervisorRating:
+          (json['companySupervisorRating'] as num?)?.toInt(),
+      companyReviewedAt: json['companyReviewedAt'] == null
+          ? null
+          : DateTime.parse(json['companyReviewedAt'] as String),
+      codeQualityRating: (json['codeQualityRating'] as num?)?.toInt(),
+      problemSolvingRating: (json['problemSolvingRating'] as num?)?.toInt(),
+      initiativeRating: (json['initiativeRating'] as num?)?.toInt(),
+      communicationRating: (json['communicationRating'] as num?)?.toInt(),
+      status: json['status'] as String? ?? 'draft',
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
       createdAt: json['createdAt'] == null
           ? null
           : DateTime.parse(json['createdAt'] as String),
       updatedAt: json['updatedAt'] == null
           ? null
           : DateTime.parse(json['updatedAt'] as String),
-      latitude: (json['latitude'] as num?)?.toDouble(),
-      longitude: (json['longitude'] as num?)?.toDouble(),
-      photoUrl: json['photoUrl'] as String?,
-      supervisorComment: json['supervisorComment'] as String?,
-      approvedAt: json['approvedAt'] == null
-          ? null
-          : DateTime.parse(json['approvedAt'] as String),
     );
 
 Map<String, dynamic> _$$LogbookEntryModelImplToJson(
         _$LogbookEntryModelImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'studentRefPath': instance.studentRefPath,
-      'placementRefPath': instance.placementRefPath,
-      'supervisorId': instance.supervisorId,
-      'date': instance.date.toIso8601String(),
-      'dayNumber': instance.dayNumber,
-      'tasksPerformed': instance.tasksPerformed,
-      'challenges': instance.challenges,
+      'studentId': instance.studentId,
+      'placementId': instance.placementId,
+      'weekNumber': instance.weekNumber,
+      'weekStartDate': instance.weekStartDate.toIso8601String(),
+      'weekEndDate': instance.weekEndDate.toIso8601String(),
+      'activitiesPerformed': instance.activitiesPerformed,
       'skillsLearned': instance.skillsLearned,
+      'challengesFaced': instance.challengesFaced,
       'hoursWorked': instance.hoursWorked,
+      'attachmentUrls': instance.attachmentUrls,
+      'submittedAt': instance.submittedAt?.toIso8601String(),
+      'isReviewedByUniversitySupervisor':
+          instance.isReviewedByUniversitySupervisor,
+      'universitySupervisorComment': instance.universitySupervisorComment,
+      'universitySupervisorRating': instance.universitySupervisorRating,
+      'universityReviewedAt': instance.universityReviewedAt?.toIso8601String(),
+      'isReviewedByCompanySupervisor': instance.isReviewedByCompanySupervisor,
+      'companySupervisorComment': instance.companySupervisorComment,
+      'companySupervisorRating': instance.companySupervisorRating,
+      'companyReviewedAt': instance.companyReviewedAt?.toIso8601String(),
+      'codeQualityRating': instance.codeQualityRating,
+      'problemSolvingRating': instance.problemSolvingRating,
+      'initiativeRating': instance.initiativeRating,
+      'communicationRating': instance.communicationRating,
       'status': instance.status,
-      'createdAt': instance.createdAt?.toIso8601String(),
-      'updatedAt': instance.updatedAt?.toIso8601String(),
       'latitude': instance.latitude,
       'longitude': instance.longitude,
-      'photoUrl': instance.photoUrl,
-      'supervisorComment': instance.supervisorComment,
-      'approvedAt': instance.approvedAt?.toIso8601String(),
+      'createdAt': instance.createdAt?.toIso8601String(),
+      'updatedAt': instance.updatedAt?.toIso8601String(),
     };

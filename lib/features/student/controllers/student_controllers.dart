@@ -43,7 +43,7 @@ final isProfileCompleteProvider = Provider<bool>((ref) {
 });
 
 // ============================================================================
-// SUPERVISOR PROVIDER (NEW)
+// SUPERVISOR PROVIDER
 // ============================================================================
 
 final currentSupervisorProvider = StreamProvider<SupervisorProfileModel?>((ref) {
@@ -52,26 +52,19 @@ final currentSupervisorProvider = StreamProvider<SupervisorProfileModel?>((ref) 
 
   final supervisorId = profile?.currentSupervisorId;
   if (supervisorId == null) {
-    print('[Supervisor] No supervisor assigned to student');
     return Stream.value(null);
   }
-
-  print('[Supervisor] Fetching supervisor: $supervisorId');
 
   return firestore
       .collection('supervisorProfiles')
       .doc(supervisorId)
       .snapshots()
       .map((doc) {
-        if (!doc.exists || doc.data() == null) {
-          print('[Supervisor] Supervisor document not found');
-          return null;
-        }
-        print('[Supervisor] Supervisor data loaded: ${doc.data()?['fullName']}');
+        if (!doc.exists || doc.data() == null) return null;
         return SupervisorProfileModel.fromFirestore(doc, null);
       })
       .handleError((e) {
-        print('[Supervisor] Error fetching supervisor: $e');
+        print('[Supervisor] Error: $e');
         return null;
       });
 });
@@ -101,13 +94,13 @@ final placementCompanyProvider = FutureProvider<CompanyModel?>((ref) async {
   final placement = ref.watch(currentPlacementProvider).value;
   final firestore = ref.watch(firestoreProvider);
 
-  final companyPath = placement?.companyRefPath;
-  if (companyPath == null) return null;
+  final companyId = placement?.companyId; // FIXED: Use companyId instead of companyRefPath
+  if (companyId == null) return null;
 
   try {
-    final doc = await firestore.doc(companyPath).get();
+    final doc = await firestore.collection('companies').doc(companyId).get(); // FIXED
     if (!doc.exists || doc.data() == null) return null;
-    return CompanyModel.fromFirestore(doc as DocumentSnapshot<Map<String, dynamic>>, null);
+    return CompanyModel.fromFirestore(doc, null);
   } catch (e) {
     print('[PlacementCompany] Error: $e');
     return null;
@@ -115,7 +108,7 @@ final placementCompanyProvider = FutureProvider<CompanyModel?>((ref) async {
 });
 
 // ============================================================================
-// LOGBOOK PROVIDERS — Debug-friendly & robust
+// LOGBOOK PROVIDERS
 // ============================================================================
 
 final logbookEntriesProvider = StreamProvider<List<Map<String, dynamic>>>((ref) {
@@ -125,12 +118,10 @@ final logbookEntriesProvider = StreamProvider<List<Map<String, dynamic>>>((ref) 
   final userId = authState.value?.uid;
   if (userId == null) return Stream.value([]);
 
-  final studentPath = 'students/$userId';
-
   return firestore
-      .collection('logbook_entries')
-      .where('studentRefPath', isEqualTo: studentPath)
-      .orderBy('date', descending: true)
+      .collection('logbookEntries') // FIXED: Changed to logbookEntries
+      .where('studentId', isEqualTo: userId) // FIXED: Use studentId
+      .orderBy('weekStartDate', descending: true) // FIXED: Use weekStartDate
       .snapshots()
       .map((snapshot) {
         return snapshot.docs.map((doc) {
@@ -150,7 +141,7 @@ final pendingLogbookCountProvider = Provider<int>((ref) {
   final entries = ref.watch(logbookEntriesProvider).value ?? [];
   return entries.where((e) {
     final status = (e['entry'] as LogbookEntryModel?)?.status.toLowerCase();
-    return status == 'pending';
+    return status == 'pending' || status == 'submitted';
   }).length;
 });
 
@@ -214,8 +205,8 @@ class LogbookController {
 
   Future<void> submitEntry(LogbookEntryModel entry) async {
     try {
-      await _db.collection('logbook_entries').add(
-        entry.copyWith(status: 'pending').toFirestore(),
+      await _db.collection('logbookEntries').add(
+        entry.copyWith(status: 'submitted').toFirestore(),
       );
     } catch (e) {
       rethrow;
@@ -227,7 +218,7 @@ class LogbookController {
       if (entry.status.toLowerCase() == 'approved') {
         throw Exception('Cannot edit approved entries');
       }
-      await _db.collection('logbook_entries').doc(entryId).update(
+      await _db.collection('logbookEntries').doc(entryId).update(
         entry.toFirestore(),
       );
     } catch (e) {
@@ -240,25 +231,25 @@ class LogbookController {
       if (status?.toLowerCase() == 'approved') {
         throw Exception('Cannot delete approved entries');
       }
-      await _db.collection('logbook_entries').doc(entryId).delete();
+      await _db.collection('logbookEntries').doc(entryId).delete();
     } catch (e) {
       rethrow;
     }
   }
 
-  Future<int> getNextDayNumber(String studentPath) async {
+  Future<int> getNextWeekNumber(String studentId) async {
     try {
       final snapshot = await _db
-          .collection('logbook_entries')
-          .where('studentRefPath', isEqualTo: studentPath)
-          .orderBy('dayNumber', descending: true)
+          .collection('logbookEntries')
+          .where('studentId', isEqualTo: studentId)
+          .orderBy('weekNumber', descending: true)
           .limit(1)
           .get();
 
       if (snapshot.docs.isEmpty) return 1;
 
       final lastEntry = LogbookEntryModel.fromFirestore(snapshot.docs.first, null);
-      return lastEntry.dayNumber + 1;
+      return lastEntry.weekNumber + 1;
     } catch (e) {
       return 1;
     }

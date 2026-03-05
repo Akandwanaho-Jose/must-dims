@@ -1,275 +1,167 @@
+// lib/features/student/presentation/pages/logbook_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-import 'package:go_router/go_router.dart'; // ← Added for context.go / context.push
+import 'package:go_router/go_router.dart';
 
 import '../../controllers/student_controllers.dart';
-import '../../../logbook/data/models/logbook_entry_model.dart';
-import '../../../logbook/presentation/screens/logbook_entry_details_screen.dart';
-import 'package:dims/features/logbook/presentation/screens/logbook_entry_form_screen.dart';
+import '../../data/models/student_profile_model.dart';
+import '../../../logbook/presentation/pages/daily_entries_list_page.dart';
+import '../../../logbook/presentation/pages/weekly_summaries_list_page.dart';
+
 class LogbookPage extends ConsumerWidget {
   const LogbookPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final entriesAsync = ref.watch(logbookEntriesProvider);
     final theme = Theme.of(context);
+    final profileAsync = ref.watch(studentProfileProvider);
 
     return Scaffold(
-      body: entriesAsync.when(
-        data: (entries) {
-          if (entries.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.book_outlined,
-                    size: 80,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No logbook entries yet',
-                    style: theme.textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Start documenting your internship journey',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  FilledButton.icon(
-                    onPressed: () {
-                      // Navigate to new entry form using go_router
-                      context.push('/logbook/add');
-                    },
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add First Entry'),
-                  ),
-                ],
-              ),
-            );
+      body: profileAsync.when(
+        data: (profile) {
+          final status =
+              profile?.internshipStatus ?? StudentInternshipStatus.notStarted;
+
+          // Guard: student hasn't started internship yet
+          if (status == StudentInternshipStatus.notStarted ||
+              status == StudentInternshipStatus.awaitingApproval) {
+            return _buildNotStartedState(context, theme, status);
           }
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(logbookEntriesProvider);
-            },
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: entries.length,
-              itemBuilder: (context, index) {
-                final entryMap = entries[index];
-                final docId = entryMap['id'] as String;
-                final entry = entryMap['entry'] as LogbookEntryModel;
+          // Student is active, completed, etc. — show logbook tabs
+          return DefaultTabController(
+            length: 2,
+            child: Column(
+              children: [
+                // Tab bar
+                Container(
+                  color: theme.colorScheme.surface,
+                  child: TabBar(
+                    labelColor: theme.colorScheme.primary,
+                    unselectedLabelColor:
+                        theme.colorScheme.onSurfaceVariant,
+                    indicatorColor: theme.colorScheme.primary,
+                    tabs: const [
+                      Tab(icon: Icon(Icons.event_note), text: 'Daily Entries'),
+                      Tab(icon: Icon(Icons.summarize), text: 'Weekly Summaries'),
+                    ],
+                  ),
+                ),
 
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    leading: CircleAvatar(
-                      backgroundColor: _getStatusColor(entry.status),
-                      radius: 28,
-                      child: Text(
-                        '${entry.dayNumber}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
+                // FAB for new entry
+                Expanded(
+                  child: Stack(
+                    children: [
+                      const TabBarView(
+                        children: [
+                          DailyEntriesListPage(),
+                          WeeklySummariesListPage(),
+                        ],
+                      ),
+                      // Floating action button to add new entry
+                      Positioned(
+                        bottom: 20,
+                        right: 16,
+                        child: FloatingActionButton.extended(
+                          onPressed: () =>
+                              context.go('/student/submit-logbook'),
+                          icon: const Icon(Icons.add),
+                          label: const Text('New Entry'),
                         ),
                       ),
-                    ),
-                    title: Text(
-                      'Day ${entry.dayNumber}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${_formatDate(entry.date)} • ${entry.status?.toUpperCase() ?? "Pending"}',
-                          style: TextStyle(
-                            color: _getStatusTextColor(entry.status),
-                          ),
-                        ),
-                        Text(
-                          '${entry.hoursWorked.toStringAsFixed(1)} hours',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.more_vert),
-                      onPressed: () => _showOptionsMenu(context, ref, docId, entry),
-                    ),
-                    onTap: () => _navigateToDetails(context, entry),
+                    ],
                   ),
-                );
-              },
+                ),
+              ],
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
-              const SizedBox(height: 16),
-              Text('Error loading entries: $error'),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(logbookEntriesProvider),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        loading: () =>
+            const Center(child: CircularProgressIndicator()),
+        error: (_, __) => const Center(
+          child: Text('Error loading logbook'),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'add_logbook_entry',
-        onPressed: () {
-          context.push('/logbook/add'); // New entry route
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('New Entry'),
-      ),
     );
   }
 
-  // ── Navigation Helpers ─────────────────────────────────────────────────────
+  Widget _buildNotStartedState(
+    BuildContext context,
+    ThemeData theme,
+    StudentInternshipStatus status,
+  ) {
+    final isPending = status == StudentInternshipStatus.awaitingApproval;
 
-  void _navigateToDetails(BuildContext context, LogbookEntryModel entry) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => LogbookEntryDetailsScreen(entry: entry),
-      ),
-    );
-  }
-
-  void _showOptionsMenu(BuildContext context, WidgetRef ref, String docId, LogbookEntryModel entry) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) => SafeArea(
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // View Details
-            ListTile(
-              leading: Icon(Icons.visibility, color: Theme.of(context).colorScheme.primary),
-              title: const Text('View Details'),
-              onTap: () {
-                Navigator.pop(context);
-                _navigateToDetails(context, entry);
-              },
-            ),
-
-            // Edit (only for draft/pending)
-            if (entry.status?.toLowerCase() == 'draft' || entry.status?.toLowerCase() == 'pending')
-              ListTile(
-                leading: Icon(Icons.edit, color: Theme.of(context).colorScheme.secondary),
-                title: const Text('Edit'),
-                onTap: () {
-                  Navigator.pop(context);
-                  // FIXED: Navigate to edit form with existing entry
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => LogbookEntryFormScreen(existingEntry: entry),
-                    ),
-                  );
-                },
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: isPending
+                    ? Colors.orange.shade50
+                    : Colors.blue.shade50,
+                shape: BoxShape.circle,
               ),
-
-            // Delete (only for draft/pending)
-            if (entry.status?.toLowerCase() == 'draft' || entry.status?.toLowerCase() == 'pending')
-              ListTile(
-                leading: const Icon(Icons.delete, color: Colors.red),
-                title: const Text('Delete', style: TextStyle(color: Colors.red)),
-                onTap: () async {
-                  Navigator.pop(context);
-
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Delete Entry'),
-                      content: const Text(
-                        'Are you sure you want to delete this logbook entry?\nThis action cannot be undone.',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          style: TextButton.styleFrom(foregroundColor: Colors.red),
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text('Delete'),
-                        ),
-                      ],
-                    ),
-                  );
-
-                  if (confirm == true && context.mounted) {
-                    try {
-                      await ref.read(logbookControllerProvider).deleteEntry(
-                            docId,
-                            entry.status,
-                          );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Entry deleted successfully'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error deleting entry: $e')),
-                      );
-                    }
-                  }
-                },
+              child: Icon(
+                isPending ? Icons.hourglass_top : Icons.book_outlined,
+                size: 56,
+                color: isPending
+                    ? Colors.orange.shade400
+                    : Colors.blue.shade400,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              isPending
+                  ? 'Application Pending'
+                  : 'Logbook Not Yet Available',
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              isPending
+                  ? 'Your logbook will be available once your placement is approved and you start your internship.'
+                  : 'Upload your acceptance letter and start your internship to access the logbook.',
+              style: TextStyle(
+                  fontSize: 14,
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.5),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 28),
+            if (!isPending)
+              FilledButton.icon(
+                onPressed: () => context.go('/student/upload-letter'),
+                icon: const Icon(Icons.upload_file_rounded),
+                label: const Text('Upload Acceptance Letter'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+              )
+            else
+              OutlinedButton.icon(
+                onPressed: () => context.go('/student/placement-status'),
+                icon: const Icon(Icons.visibility_outlined),
+                label: const Text('View Application Status'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
               ),
           ],
         ),
       ),
     );
-  }
-
-  // ── Helper Methods ─────────────────────────────────────────────────────────
-
-  Color _getStatusColor(String? status) {
-    switch (status?.toLowerCase()) {
-      case 'approved':
-        return Colors.green;
-      case 'rejected':
-        return Colors.red;
-      default:
-        return Colors.orange;
-    }
-  }
-
-  Color _getStatusTextColor(String? status) {
-    switch (status?.toLowerCase()) {
-      case 'approved':
-        return Colors.green.shade800;
-      case 'rejected':
-        return Colors.red.shade800;
-      default:
-        return Colors.orange.shade800;
-    }
-  }
-
-  String _formatDate(DateTime date) {
-    return DateFormat('MMM d, yyyy').format(date);
   }
 }

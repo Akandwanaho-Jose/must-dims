@@ -10,12 +10,10 @@ import '../../../student/data/models/student_profile_model.dart';
 // FORM PROVIDER (supports both create and edit)
 // ──────────────────────────────────────────────────────────────────────────────
 
-final logbookFormProvider = StateNotifierProvider.autoDispose<
-    LogbookFormNotifier, LogbookFormState>((ref) {
+final logbookFormProvider = StateNotifierProvider.autoDispose<LogbookFormNotifier, LogbookFormState>((ref) {
   final studentProfileAsync = ref.watch(studentProfileProvider);
   final studentProfile = studentProfileAsync.value;
 
-  // Pass ref so we can access controllers inside notifier
   return LogbookFormNotifier(ref, studentProfile);
 });
 
@@ -72,7 +70,7 @@ class LogbookFormState {
 class LogbookFormNotifier extends StateNotifier<LogbookFormState> {
   final Ref _ref;
   final StudentProfileModel? _studentProfile;
-  String? _editingEntryId; // Track if we're editing (set when loading entry)
+  String? _editingEntryId;
 
   LogbookFormNotifier(this._ref, this._studentProfile)
       : super(LogbookFormState(selectedDate: DateTime.now()));
@@ -82,13 +80,12 @@ class LogbookFormNotifier extends StateNotifier<LogbookFormState> {
     state = LogbookFormState(selectedDate: DateTime.now());
   }
 
-  // ── NEW: Load existing entry for edit mode ────────────────────────────────
   void loadExistingEntry(LogbookEntryModel entry) {
     _editingEntryId = entry.id;
     state = state.copyWith(
-      selectedDate: entry.date,
-      tasksPerformed: entry.tasksPerformed,
-      challenges: entry.challenges,
+      selectedDate: entry.weekStartDate, // FIXED: Use weekStartDate
+      tasksPerformed: entry.activitiesPerformed, // FIXED: Use activitiesPerformed
+      challenges: entry.challengesFaced, // FIXED: Use challengesFaced
       skillsLearned: entry.skillsLearned,
       hoursWorked: entry.hoursWorked,
     );
@@ -118,17 +115,16 @@ class LogbookFormNotifier extends StateNotifier<LogbookFormState> {
     state = state.copyWith(hoursWorked: value.clamp(0.0, 24.0));
   }
 
-  /// ── Submit: Handles BOTH create and update ────────────────────────────────
   Future<bool> submit() async {
     if (_studentProfile == null) {
       state = state.copyWith(errorMessage: 'No student profile found');
       return false;
     }
 
-    // Check if the student actually has a supervisor assigned
-    final supervisorId = _studentProfile!.currentSupervisorId; // Ensure this field name matches your StudentProfileModel
-    if (supervisorId == null || supervisorId.isEmpty) {
-      state = state.copyWith(errorMessage: 'No supervisor assigned. Please contact admin.');
+    // Get placement ID
+    final placementId = _studentProfile!.currentPlacementId;
+    if (placementId == null || placementId.isEmpty) {
+      state = state.copyWith(errorMessage: 'No active placement. Please contact admin.');
       return false;
     }
 
@@ -145,26 +141,30 @@ class LogbookFormNotifier extends StateNotifier<LogbookFormState> {
         throw Exception('No authenticated user');
       }
 
+      // Calculate week number (you may want to improve this logic)
+      final weekNumber = 1; // TODO: Calculate based on internship start date
+
+      final weekEndDate = state.selectedDate!.add(const Duration(days: 6));
+
       final entry = LogbookEntryModel(
-        id: _editingEntryId, 
-        studentRefPath: 'students/${currentUser.uid}',
-        placementRefPath: _studentProfile!.currentPlacementId ?? '',
-        supervisorId: supervisorId, // <--- ADD THIS LINE (Fixes the error)
-        date: state.selectedDate!,
-        dayNumber: 1, // You could calculate this based on existing entries
-        tasksPerformed: state.tasksPerformed.trim(),
-        challenges: state.challenges,
+        id: _editingEntryId,
+        studentId: currentUser.uid, // FIXED
+        placementId: placementId, // FIXED
+        weekNumber: weekNumber, // FIXED
+        weekStartDate: state.selectedDate!, // FIXED
+        weekEndDate: weekEndDate, // FIXED
+        activitiesPerformed: state.tasksPerformed.trim(), // FIXED
+        challengesFaced: state.challenges, // FIXED
         skillsLearned: state.skillsLearned,
         hoursWorked: state.hoursWorked,
-        status: 'pending', // Usually, students submit straight to 'pending' for review
+        submittedAt: DateTime.now(), // FIXED
+        status: 'submitted', // FIXED
         createdAt: DateTime.now(),
       );
 
       if (_editingEntryId != null) {
-        // EDIT MODE
         await _ref.read(logbookControllerProvider).updateEntry(_editingEntryId!, entry);
       } else {
-        // CREATE MODE
         await _ref.read(logbookControllerProvider).submitEntry(entry);
       }
 
@@ -182,4 +182,5 @@ class LogbookFormNotifier extends StateNotifier<LogbookFormState> {
       );
       return false;
     }
-  }}
+  }
+}

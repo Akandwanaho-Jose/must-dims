@@ -36,16 +36,16 @@ class _LogbookEntryReviewScreenState extends ConsumerState<LogbookEntryReviewScr
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Day ${widget.entry.dayNumber} Review')),
+      appBar: AppBar(title: Text('Week ${widget.entry.weekNumber} Review')),  // Line 39 FIXED
       body: _isLoading 
         ? const Center(child: CircularProgressIndicator())
         : ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Text(DateFormat('EEEE, MMM d, yyyy').format(widget.entry.date), style: Theme.of(context).textTheme.titleMedium),
+             Text(DateFormat('EEEE, MMM d, yyyy').format(widget.entry.weekStartDate), style: Theme.of(context).textTheme.titleMedium),  // Line 45 FIXED
               const SizedBox(height: 16),
               const Text('Tasks Performed:', style: TextStyle(fontWeight: FontWeight.bold)),
-              Text(widget.entry.tasksPerformed),
+              Text(widget.entry.activitiesPerformed),  // Line 48 FIXED
               const SizedBox(height: 16),
               const Text('Skills Learned:', style: TextStyle(fontWeight: FontWeight.bold)),
               Text(widget.entry.skillsLearned ?? 'None listed'),

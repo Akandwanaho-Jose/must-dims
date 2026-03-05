@@ -21,13 +21,35 @@ EvaluationModel _$EvaluationModelFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$EvaluationModel {
   String? get id => throw _privateConstructorUsedError;
+  String get placementId => throw _privateConstructorUsedError;
   String get studentId => throw _privateConstructorUsedError;
-  String get supervisorId => throw _privateConstructorUsedError;
-  double get performanceScore => throw _privateConstructorUsedError;
-  double get attendanceScore => throw _privateConstructorUsedError;
-  double get communicationScore => throw _privateConstructorUsedError;
-  String get comments => throw _privateConstructorUsedError;
+  EvaluationType get evaluatorType => throw _privateConstructorUsedError;
+  String get evaluatorId => throw _privateConstructorUsedError;
+  String? get evaluatorName =>
+      throw _privateConstructorUsedError; // Overall marks
+  double get finalMarks => throw _privateConstructorUsedError; // Out of 100
+// Category ratings (1-5 stars each)
+  double get technicalSkillsRating => throw _privateConstructorUsedError;
+  double get workEthicRating => throw _privateConstructorUsedError;
+  double get communicationRating => throw _privateConstructorUsedError;
+  double get problemSolvingRating => throw _privateConstructorUsedError;
+  double get initiativeRating => throw _privateConstructorUsedError;
+  double get teamworkRating =>
+      throw _privateConstructorUsedError; // Attendance (for company supervisor)
+  int? get daysPresent => throw _privateConstructorUsedError;
+  int? get daysAbsent => throw _privateConstructorUsedError;
+  int? get totalWorkingDays =>
+      throw _privateConstructorUsedError; // Recommendations
+  String? get overallComments => throw _privateConstructorUsedError;
+  String? get strengthsHighlighted => throw _privateConstructorUsedError;
+  String? get areasForImprovement => throw _privateConstructorUsedError;
+  String? get recommendationsForFutureInterns =>
+      throw _privateConstructorUsedError; // Hiring potential (for company supervisor)
+  bool? get wouldHireAgain => throw _privateConstructorUsedError;
+  String? get hiringConditions =>
+      throw _privateConstructorUsedError; // Timestamps
   DateTime? get createdAt => throw _privateConstructorUsedError;
+  DateTime? get submittedAt => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -43,13 +65,29 @@ abstract class $EvaluationModelCopyWith<$Res> {
   @useResult
   $Res call(
       {String? id,
+      String placementId,
       String studentId,
-      String supervisorId,
-      double performanceScore,
-      double attendanceScore,
-      double communicationScore,
-      String comments,
-      DateTime? createdAt});
+      EvaluationType evaluatorType,
+      String evaluatorId,
+      String? evaluatorName,
+      double finalMarks,
+      double technicalSkillsRating,
+      double workEthicRating,
+      double communicationRating,
+      double problemSolvingRating,
+      double initiativeRating,
+      double teamworkRating,
+      int? daysPresent,
+      int? daysAbsent,
+      int? totalWorkingDays,
+      String? overallComments,
+      String? strengthsHighlighted,
+      String? areasForImprovement,
+      String? recommendationsForFutureInterns,
+      bool? wouldHireAgain,
+      String? hiringConditions,
+      DateTime? createdAt,
+      DateTime? submittedAt});
 }
 
 /// @nodoc
@@ -66,46 +104,127 @@ class _$EvaluationModelCopyWithImpl<$Res, $Val extends EvaluationModel>
   @override
   $Res call({
     Object? id = freezed,
+    Object? placementId = null,
     Object? studentId = null,
-    Object? supervisorId = null,
-    Object? performanceScore = null,
-    Object? attendanceScore = null,
-    Object? communicationScore = null,
-    Object? comments = null,
+    Object? evaluatorType = null,
+    Object? evaluatorId = null,
+    Object? evaluatorName = freezed,
+    Object? finalMarks = null,
+    Object? technicalSkillsRating = null,
+    Object? workEthicRating = null,
+    Object? communicationRating = null,
+    Object? problemSolvingRating = null,
+    Object? initiativeRating = null,
+    Object? teamworkRating = null,
+    Object? daysPresent = freezed,
+    Object? daysAbsent = freezed,
+    Object? totalWorkingDays = freezed,
+    Object? overallComments = freezed,
+    Object? strengthsHighlighted = freezed,
+    Object? areasForImprovement = freezed,
+    Object? recommendationsForFutureInterns = freezed,
+    Object? wouldHireAgain = freezed,
+    Object? hiringConditions = freezed,
     Object? createdAt = freezed,
+    Object? submittedAt = freezed,
   }) {
     return _then(_value.copyWith(
       id: freezed == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String?,
+      placementId: null == placementId
+          ? _value.placementId
+          : placementId // ignore: cast_nullable_to_non_nullable
+              as String,
       studentId: null == studentId
           ? _value.studentId
           : studentId // ignore: cast_nullable_to_non_nullable
               as String,
-      supervisorId: null == supervisorId
-          ? _value.supervisorId
-          : supervisorId // ignore: cast_nullable_to_non_nullable
+      evaluatorType: null == evaluatorType
+          ? _value.evaluatorType
+          : evaluatorType // ignore: cast_nullable_to_non_nullable
+              as EvaluationType,
+      evaluatorId: null == evaluatorId
+          ? _value.evaluatorId
+          : evaluatorId // ignore: cast_nullable_to_non_nullable
               as String,
-      performanceScore: null == performanceScore
-          ? _value.performanceScore
-          : performanceScore // ignore: cast_nullable_to_non_nullable
+      evaluatorName: freezed == evaluatorName
+          ? _value.evaluatorName
+          : evaluatorName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      finalMarks: null == finalMarks
+          ? _value.finalMarks
+          : finalMarks // ignore: cast_nullable_to_non_nullable
               as double,
-      attendanceScore: null == attendanceScore
-          ? _value.attendanceScore
-          : attendanceScore // ignore: cast_nullable_to_non_nullable
+      technicalSkillsRating: null == technicalSkillsRating
+          ? _value.technicalSkillsRating
+          : technicalSkillsRating // ignore: cast_nullable_to_non_nullable
               as double,
-      communicationScore: null == communicationScore
-          ? _value.communicationScore
-          : communicationScore // ignore: cast_nullable_to_non_nullable
+      workEthicRating: null == workEthicRating
+          ? _value.workEthicRating
+          : workEthicRating // ignore: cast_nullable_to_non_nullable
               as double,
-      comments: null == comments
-          ? _value.comments
-          : comments // ignore: cast_nullable_to_non_nullable
-              as String,
+      communicationRating: null == communicationRating
+          ? _value.communicationRating
+          : communicationRating // ignore: cast_nullable_to_non_nullable
+              as double,
+      problemSolvingRating: null == problemSolvingRating
+          ? _value.problemSolvingRating
+          : problemSolvingRating // ignore: cast_nullable_to_non_nullable
+              as double,
+      initiativeRating: null == initiativeRating
+          ? _value.initiativeRating
+          : initiativeRating // ignore: cast_nullable_to_non_nullable
+              as double,
+      teamworkRating: null == teamworkRating
+          ? _value.teamworkRating
+          : teamworkRating // ignore: cast_nullable_to_non_nullable
+              as double,
+      daysPresent: freezed == daysPresent
+          ? _value.daysPresent
+          : daysPresent // ignore: cast_nullable_to_non_nullable
+              as int?,
+      daysAbsent: freezed == daysAbsent
+          ? _value.daysAbsent
+          : daysAbsent // ignore: cast_nullable_to_non_nullable
+              as int?,
+      totalWorkingDays: freezed == totalWorkingDays
+          ? _value.totalWorkingDays
+          : totalWorkingDays // ignore: cast_nullable_to_non_nullable
+              as int?,
+      overallComments: freezed == overallComments
+          ? _value.overallComments
+          : overallComments // ignore: cast_nullable_to_non_nullable
+              as String?,
+      strengthsHighlighted: freezed == strengthsHighlighted
+          ? _value.strengthsHighlighted
+          : strengthsHighlighted // ignore: cast_nullable_to_non_nullable
+              as String?,
+      areasForImprovement: freezed == areasForImprovement
+          ? _value.areasForImprovement
+          : areasForImprovement // ignore: cast_nullable_to_non_nullable
+              as String?,
+      recommendationsForFutureInterns: freezed ==
+              recommendationsForFutureInterns
+          ? _value.recommendationsForFutureInterns
+          : recommendationsForFutureInterns // ignore: cast_nullable_to_non_nullable
+              as String?,
+      wouldHireAgain: freezed == wouldHireAgain
+          ? _value.wouldHireAgain
+          : wouldHireAgain // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      hiringConditions: freezed == hiringConditions
+          ? _value.hiringConditions
+          : hiringConditions // ignore: cast_nullable_to_non_nullable
+              as String?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      submittedAt: freezed == submittedAt
+          ? _value.submittedAt
+          : submittedAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
     ) as $Val);
   }
@@ -121,13 +240,29 @@ abstract class _$$EvaluationModelImplCopyWith<$Res>
   @useResult
   $Res call(
       {String? id,
+      String placementId,
       String studentId,
-      String supervisorId,
-      double performanceScore,
-      double attendanceScore,
-      double communicationScore,
-      String comments,
-      DateTime? createdAt});
+      EvaluationType evaluatorType,
+      String evaluatorId,
+      String? evaluatorName,
+      double finalMarks,
+      double technicalSkillsRating,
+      double workEthicRating,
+      double communicationRating,
+      double problemSolvingRating,
+      double initiativeRating,
+      double teamworkRating,
+      int? daysPresent,
+      int? daysAbsent,
+      int? totalWorkingDays,
+      String? overallComments,
+      String? strengthsHighlighted,
+      String? areasForImprovement,
+      String? recommendationsForFutureInterns,
+      bool? wouldHireAgain,
+      String? hiringConditions,
+      DateTime? createdAt,
+      DateTime? submittedAt});
 }
 
 /// @nodoc
@@ -142,46 +277,127 @@ class __$$EvaluationModelImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = freezed,
+    Object? placementId = null,
     Object? studentId = null,
-    Object? supervisorId = null,
-    Object? performanceScore = null,
-    Object? attendanceScore = null,
-    Object? communicationScore = null,
-    Object? comments = null,
+    Object? evaluatorType = null,
+    Object? evaluatorId = null,
+    Object? evaluatorName = freezed,
+    Object? finalMarks = null,
+    Object? technicalSkillsRating = null,
+    Object? workEthicRating = null,
+    Object? communicationRating = null,
+    Object? problemSolvingRating = null,
+    Object? initiativeRating = null,
+    Object? teamworkRating = null,
+    Object? daysPresent = freezed,
+    Object? daysAbsent = freezed,
+    Object? totalWorkingDays = freezed,
+    Object? overallComments = freezed,
+    Object? strengthsHighlighted = freezed,
+    Object? areasForImprovement = freezed,
+    Object? recommendationsForFutureInterns = freezed,
+    Object? wouldHireAgain = freezed,
+    Object? hiringConditions = freezed,
     Object? createdAt = freezed,
+    Object? submittedAt = freezed,
   }) {
     return _then(_$EvaluationModelImpl(
       id: freezed == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String?,
+      placementId: null == placementId
+          ? _value.placementId
+          : placementId // ignore: cast_nullable_to_non_nullable
+              as String,
       studentId: null == studentId
           ? _value.studentId
           : studentId // ignore: cast_nullable_to_non_nullable
               as String,
-      supervisorId: null == supervisorId
-          ? _value.supervisorId
-          : supervisorId // ignore: cast_nullable_to_non_nullable
+      evaluatorType: null == evaluatorType
+          ? _value.evaluatorType
+          : evaluatorType // ignore: cast_nullable_to_non_nullable
+              as EvaluationType,
+      evaluatorId: null == evaluatorId
+          ? _value.evaluatorId
+          : evaluatorId // ignore: cast_nullable_to_non_nullable
               as String,
-      performanceScore: null == performanceScore
-          ? _value.performanceScore
-          : performanceScore // ignore: cast_nullable_to_non_nullable
+      evaluatorName: freezed == evaluatorName
+          ? _value.evaluatorName
+          : evaluatorName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      finalMarks: null == finalMarks
+          ? _value.finalMarks
+          : finalMarks // ignore: cast_nullable_to_non_nullable
               as double,
-      attendanceScore: null == attendanceScore
-          ? _value.attendanceScore
-          : attendanceScore // ignore: cast_nullable_to_non_nullable
+      technicalSkillsRating: null == technicalSkillsRating
+          ? _value.technicalSkillsRating
+          : technicalSkillsRating // ignore: cast_nullable_to_non_nullable
               as double,
-      communicationScore: null == communicationScore
-          ? _value.communicationScore
-          : communicationScore // ignore: cast_nullable_to_non_nullable
+      workEthicRating: null == workEthicRating
+          ? _value.workEthicRating
+          : workEthicRating // ignore: cast_nullable_to_non_nullable
               as double,
-      comments: null == comments
-          ? _value.comments
-          : comments // ignore: cast_nullable_to_non_nullable
-              as String,
+      communicationRating: null == communicationRating
+          ? _value.communicationRating
+          : communicationRating // ignore: cast_nullable_to_non_nullable
+              as double,
+      problemSolvingRating: null == problemSolvingRating
+          ? _value.problemSolvingRating
+          : problemSolvingRating // ignore: cast_nullable_to_non_nullable
+              as double,
+      initiativeRating: null == initiativeRating
+          ? _value.initiativeRating
+          : initiativeRating // ignore: cast_nullable_to_non_nullable
+              as double,
+      teamworkRating: null == teamworkRating
+          ? _value.teamworkRating
+          : teamworkRating // ignore: cast_nullable_to_non_nullable
+              as double,
+      daysPresent: freezed == daysPresent
+          ? _value.daysPresent
+          : daysPresent // ignore: cast_nullable_to_non_nullable
+              as int?,
+      daysAbsent: freezed == daysAbsent
+          ? _value.daysAbsent
+          : daysAbsent // ignore: cast_nullable_to_non_nullable
+              as int?,
+      totalWorkingDays: freezed == totalWorkingDays
+          ? _value.totalWorkingDays
+          : totalWorkingDays // ignore: cast_nullable_to_non_nullable
+              as int?,
+      overallComments: freezed == overallComments
+          ? _value.overallComments
+          : overallComments // ignore: cast_nullable_to_non_nullable
+              as String?,
+      strengthsHighlighted: freezed == strengthsHighlighted
+          ? _value.strengthsHighlighted
+          : strengthsHighlighted // ignore: cast_nullable_to_non_nullable
+              as String?,
+      areasForImprovement: freezed == areasForImprovement
+          ? _value.areasForImprovement
+          : areasForImprovement // ignore: cast_nullable_to_non_nullable
+              as String?,
+      recommendationsForFutureInterns: freezed ==
+              recommendationsForFutureInterns
+          ? _value.recommendationsForFutureInterns
+          : recommendationsForFutureInterns // ignore: cast_nullable_to_non_nullable
+              as String?,
+      wouldHireAgain: freezed == wouldHireAgain
+          ? _value.wouldHireAgain
+          : wouldHireAgain // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      hiringConditions: freezed == hiringConditions
+          ? _value.hiringConditions
+          : hiringConditions // ignore: cast_nullable_to_non_nullable
+              as String?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      submittedAt: freezed == submittedAt
+          ? _value.submittedAt
+          : submittedAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
     ));
   }
@@ -192,13 +408,29 @@ class __$$EvaluationModelImplCopyWithImpl<$Res>
 class _$EvaluationModelImpl implements _EvaluationModel {
   const _$EvaluationModelImpl(
       {this.id,
+      required this.placementId,
       required this.studentId,
-      required this.supervisorId,
-      required this.performanceScore,
-      required this.attendanceScore,
-      required this.communicationScore,
-      required this.comments,
-      this.createdAt});
+      required this.evaluatorType,
+      required this.evaluatorId,
+      this.evaluatorName,
+      required this.finalMarks,
+      required this.technicalSkillsRating,
+      required this.workEthicRating,
+      required this.communicationRating,
+      required this.problemSolvingRating,
+      required this.initiativeRating,
+      required this.teamworkRating,
+      this.daysPresent,
+      this.daysAbsent,
+      this.totalWorkingDays,
+      this.overallComments,
+      this.strengthsHighlighted,
+      this.areasForImprovement,
+      this.recommendationsForFutureInterns,
+      this.wouldHireAgain,
+      this.hiringConditions,
+      this.createdAt,
+      this.submittedAt});
 
   factory _$EvaluationModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$EvaluationModelImplFromJson(json);
@@ -206,23 +438,62 @@ class _$EvaluationModelImpl implements _EvaluationModel {
   @override
   final String? id;
   @override
+  final String placementId;
+  @override
   final String studentId;
   @override
-  final String supervisorId;
+  final EvaluationType evaluatorType;
   @override
-  final double performanceScore;
+  final String evaluatorId;
   @override
-  final double attendanceScore;
+  final String? evaluatorName;
+// Overall marks
   @override
-  final double communicationScore;
+  final double finalMarks;
+// Out of 100
+// Category ratings (1-5 stars each)
   @override
-  final String comments;
+  final double technicalSkillsRating;
+  @override
+  final double workEthicRating;
+  @override
+  final double communicationRating;
+  @override
+  final double problemSolvingRating;
+  @override
+  final double initiativeRating;
+  @override
+  final double teamworkRating;
+// Attendance (for company supervisor)
+  @override
+  final int? daysPresent;
+  @override
+  final int? daysAbsent;
+  @override
+  final int? totalWorkingDays;
+// Recommendations
+  @override
+  final String? overallComments;
+  @override
+  final String? strengthsHighlighted;
+  @override
+  final String? areasForImprovement;
+  @override
+  final String? recommendationsForFutureInterns;
+// Hiring potential (for company supervisor)
+  @override
+  final bool? wouldHireAgain;
+  @override
+  final String? hiringConditions;
+// Timestamps
   @override
   final DateTime? createdAt;
+  @override
+  final DateTime? submittedAt;
 
   @override
   String toString() {
-    return 'EvaluationModel(id: $id, studentId: $studentId, supervisorId: $supervisorId, performanceScore: $performanceScore, attendanceScore: $attendanceScore, communicationScore: $communicationScore, comments: $comments, createdAt: $createdAt)';
+    return 'EvaluationModel(id: $id, placementId: $placementId, studentId: $studentId, evaluatorType: $evaluatorType, evaluatorId: $evaluatorId, evaluatorName: $evaluatorName, finalMarks: $finalMarks, technicalSkillsRating: $technicalSkillsRating, workEthicRating: $workEthicRating, communicationRating: $communicationRating, problemSolvingRating: $problemSolvingRating, initiativeRating: $initiativeRating, teamworkRating: $teamworkRating, daysPresent: $daysPresent, daysAbsent: $daysAbsent, totalWorkingDays: $totalWorkingDays, overallComments: $overallComments, strengthsHighlighted: $strengthsHighlighted, areasForImprovement: $areasForImprovement, recommendationsForFutureInterns: $recommendationsForFutureInterns, wouldHireAgain: $wouldHireAgain, hiringConditions: $hiringConditions, createdAt: $createdAt, submittedAt: $submittedAt)';
   }
 
   @override
@@ -231,34 +502,85 @@ class _$EvaluationModelImpl implements _EvaluationModel {
         (other.runtimeType == runtimeType &&
             other is _$EvaluationModelImpl &&
             (identical(other.id, id) || other.id == id) &&
+            (identical(other.placementId, placementId) ||
+                other.placementId == placementId) &&
             (identical(other.studentId, studentId) ||
                 other.studentId == studentId) &&
-            (identical(other.supervisorId, supervisorId) ||
-                other.supervisorId == supervisorId) &&
-            (identical(other.performanceScore, performanceScore) ||
-                other.performanceScore == performanceScore) &&
-            (identical(other.attendanceScore, attendanceScore) ||
-                other.attendanceScore == attendanceScore) &&
-            (identical(other.communicationScore, communicationScore) ||
-                other.communicationScore == communicationScore) &&
-            (identical(other.comments, comments) ||
-                other.comments == comments) &&
+            (identical(other.evaluatorType, evaluatorType) ||
+                other.evaluatorType == evaluatorType) &&
+            (identical(other.evaluatorId, evaluatorId) ||
+                other.evaluatorId == evaluatorId) &&
+            (identical(other.evaluatorName, evaluatorName) ||
+                other.evaluatorName == evaluatorName) &&
+            (identical(other.finalMarks, finalMarks) ||
+                other.finalMarks == finalMarks) &&
+            (identical(other.technicalSkillsRating, technicalSkillsRating) ||
+                other.technicalSkillsRating == technicalSkillsRating) &&
+            (identical(other.workEthicRating, workEthicRating) ||
+                other.workEthicRating == workEthicRating) &&
+            (identical(other.communicationRating, communicationRating) ||
+                other.communicationRating == communicationRating) &&
+            (identical(other.problemSolvingRating, problemSolvingRating) ||
+                other.problemSolvingRating == problemSolvingRating) &&
+            (identical(other.initiativeRating, initiativeRating) ||
+                other.initiativeRating == initiativeRating) &&
+            (identical(other.teamworkRating, teamworkRating) ||
+                other.teamworkRating == teamworkRating) &&
+            (identical(other.daysPresent, daysPresent) ||
+                other.daysPresent == daysPresent) &&
+            (identical(other.daysAbsent, daysAbsent) ||
+                other.daysAbsent == daysAbsent) &&
+            (identical(other.totalWorkingDays, totalWorkingDays) ||
+                other.totalWorkingDays == totalWorkingDays) &&
+            (identical(other.overallComments, overallComments) ||
+                other.overallComments == overallComments) &&
+            (identical(other.strengthsHighlighted, strengthsHighlighted) ||
+                other.strengthsHighlighted == strengthsHighlighted) &&
+            (identical(other.areasForImprovement, areasForImprovement) ||
+                other.areasForImprovement == areasForImprovement) &&
+            (identical(other.recommendationsForFutureInterns,
+                    recommendationsForFutureInterns) ||
+                other.recommendationsForFutureInterns ==
+                    recommendationsForFutureInterns) &&
+            (identical(other.wouldHireAgain, wouldHireAgain) ||
+                other.wouldHireAgain == wouldHireAgain) &&
+            (identical(other.hiringConditions, hiringConditions) ||
+                other.hiringConditions == hiringConditions) &&
             (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt));
+                other.createdAt == createdAt) &&
+            (identical(other.submittedAt, submittedAt) ||
+                other.submittedAt == submittedAt));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      studentId,
-      supervisorId,
-      performanceScore,
-      attendanceScore,
-      communicationScore,
-      comments,
-      createdAt);
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        id,
+        placementId,
+        studentId,
+        evaluatorType,
+        evaluatorId,
+        evaluatorName,
+        finalMarks,
+        technicalSkillsRating,
+        workEthicRating,
+        communicationRating,
+        problemSolvingRating,
+        initiativeRating,
+        teamworkRating,
+        daysPresent,
+        daysAbsent,
+        totalWorkingDays,
+        overallComments,
+        strengthsHighlighted,
+        areasForImprovement,
+        recommendationsForFutureInterns,
+        wouldHireAgain,
+        hiringConditions,
+        createdAt,
+        submittedAt
+      ]);
 
   @JsonKey(ignore: true)
   @override
@@ -278,13 +600,29 @@ class _$EvaluationModelImpl implements _EvaluationModel {
 abstract class _EvaluationModel implements EvaluationModel {
   const factory _EvaluationModel(
       {final String? id,
+      required final String placementId,
       required final String studentId,
-      required final String supervisorId,
-      required final double performanceScore,
-      required final double attendanceScore,
-      required final double communicationScore,
-      required final String comments,
-      final DateTime? createdAt}) = _$EvaluationModelImpl;
+      required final EvaluationType evaluatorType,
+      required final String evaluatorId,
+      final String? evaluatorName,
+      required final double finalMarks,
+      required final double technicalSkillsRating,
+      required final double workEthicRating,
+      required final double communicationRating,
+      required final double problemSolvingRating,
+      required final double initiativeRating,
+      required final double teamworkRating,
+      final int? daysPresent,
+      final int? daysAbsent,
+      final int? totalWorkingDays,
+      final String? overallComments,
+      final String? strengthsHighlighted,
+      final String? areasForImprovement,
+      final String? recommendationsForFutureInterns,
+      final bool? wouldHireAgain,
+      final String? hiringConditions,
+      final DateTime? createdAt,
+      final DateTime? submittedAt}) = _$EvaluationModelImpl;
 
   factory _EvaluationModel.fromJson(Map<String, dynamic> json) =
       _$EvaluationModelImpl.fromJson;
@@ -292,19 +630,52 @@ abstract class _EvaluationModel implements EvaluationModel {
   @override
   String? get id;
   @override
+  String get placementId;
+  @override
   String get studentId;
   @override
-  String get supervisorId;
+  EvaluationType get evaluatorType;
   @override
-  double get performanceScore;
+  String get evaluatorId;
   @override
-  double get attendanceScore;
+  String? get evaluatorName;
+  @override // Overall marks
+  double get finalMarks;
+  @override // Out of 100
+// Category ratings (1-5 stars each)
+  double get technicalSkillsRating;
   @override
-  double get communicationScore;
+  double get workEthicRating;
   @override
-  String get comments;
+  double get communicationRating;
   @override
+  double get problemSolvingRating;
+  @override
+  double get initiativeRating;
+  @override
+  double get teamworkRating;
+  @override // Attendance (for company supervisor)
+  int? get daysPresent;
+  @override
+  int? get daysAbsent;
+  @override
+  int? get totalWorkingDays;
+  @override // Recommendations
+  String? get overallComments;
+  @override
+  String? get strengthsHighlighted;
+  @override
+  String? get areasForImprovement;
+  @override
+  String? get recommendationsForFutureInterns;
+  @override // Hiring potential (for company supervisor)
+  bool? get wouldHireAgain;
+  @override
+  String? get hiringConditions;
+  @override // Timestamps
   DateTime? get createdAt;
+  @override
+  DateTime? get submittedAt;
   @override
   @JsonKey(ignore: true)
   _$$EvaluationModelImplCopyWith<_$EvaluationModelImpl> get copyWith =>

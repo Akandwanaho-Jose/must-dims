@@ -15,23 +15,22 @@ class LogbookEntryDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dateFormat = DateFormat('EEEE, MMMM d, yyyy');
-    final timeFormat = DateFormat('HH:mm');
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Entry Details - Day ${entry.dayNumber}'),
+        title: Text('Entry Details - Week ${entry.weekNumber}'), // FIXED
         actions: [
-          if (entry.status != null)
+          if (entry.status.isNotEmpty) // FIXED
             Padding(
               padding: const EdgeInsets.only(right: 16),
               child: Chip(
                 label: Text(
-                  entry.status!.toUpperCase(),
+                  entry.status.toUpperCase(),
                   style: TextStyle(
-                    color: _getStatusTextColor(entry.status!),
+                    color: _getStatusTextColor(entry.status),
                   ),
                 ),
-                backgroundColor: _getStatusColor(entry.status!),
+                backgroundColor: _getStatusColor(entry.status),
               ),
             ),
         ],
@@ -52,14 +51,14 @@ class LogbookEntryDetailsScreen extends StatelessWidget {
                   children: [
                     _DetailRow(
                       icon: Icons.calendar_today,
-                      label: 'Date',
-                      value: dateFormat.format(entry.date),
+                      label: 'Week Period',
+                      value: '${dateFormat.format(entry.weekStartDate)} - ${dateFormat.format(entry.weekEndDate)}', // FIXED
                     ),
                     const Divider(height: 32),
                     _DetailRow(
                       icon: Icons.numbers,
-                      label: 'Day Number',
-                      value: '${entry.dayNumber}',
+                      label: 'Week Number',
+                      value: '${entry.weekNumber}', // FIXED
                     ),
                     const Divider(height: 32),
                     _DetailRow(
@@ -84,14 +83,14 @@ class LogbookEntryDetailsScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Tasks Performed',
+                      'Activities Performed',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      entry.tasksPerformed,
+                      entry.activitiesPerformed, // FIXED
                       style: theme.textTheme.bodyLarge,
                     ),
                   ],
@@ -101,7 +100,7 @@ class LogbookEntryDetailsScreen extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // Challenges & Skills (side by side on larger screens)
+            // Challenges & Skills
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -122,10 +121,10 @@ class LogbookEntryDetailsScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            entry.challenges ?? 'No challenges reported',
+                            entry.challengesFaced ?? 'No challenges reported', // FIXED
                             style: theme.textTheme.bodyLarge?.copyWith(
-                              color: entry.challenges == null ? Colors.grey : null,
-                              fontStyle: entry.challenges == null ? FontStyle.italic : null,
+                              color: entry.challengesFaced == null ? Colors.grey : null,
+                              fontStyle: entry.challengesFaced == null ? FontStyle.italic : null,
                             ),
                           ),
                         ],
@@ -189,10 +188,10 @@ class LogbookEntryDetailsScreen extends StatelessWidget {
                     ),
                     const Divider(height: 24),
                     _TimestampRow(
-                      label: 'Last Updated',
-                      value: entry.updatedAt != null
-                          ? DateFormat('MMM d, yyyy • HH:mm').format(entry.updatedAt!)
-                          : 'Unknown',
+                      label: 'Submitted',
+                      value: entry.submittedAt != null
+                          ? DateFormat('MMM d, yyyy • HH:mm').format(entry.submittedAt!)
+                          : 'Not submitted',
                     ),
                   ],
                 ),
@@ -227,7 +226,6 @@ class LogbookEntryDetailsScreen extends StatelessWidget {
   }
 }
 
-// Reusable detail row widget
 class _DetailRow extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -267,7 +265,6 @@ class _DetailRow extends StatelessWidget {
   }
 }
 
-// Reusable timestamp row
 class _TimestampRow extends StatelessWidget {
   final String label;
   final String value;

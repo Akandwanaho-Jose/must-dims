@@ -132,7 +132,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   textCapitalization: TextCapitalization.words,
                   decoration: const InputDecoration(
                     labelText: 'Full Name',
-                    hintText: 'John Doe',
+                    hintText: '',
                     prefixIcon: Icon(Icons.person_outline),
                     border: OutlineInputBorder(),
                   ),
