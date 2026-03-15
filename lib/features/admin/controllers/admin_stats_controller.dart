@@ -14,6 +14,7 @@ class AdminStats {
   final int activeInternships;
   final int totalCompanies;
   final double completionRate;
+  final int studentsWithPlacement;
 
   AdminStats({
     required this.totalStudents,
@@ -22,6 +23,7 @@ class AdminStats {
     required this.activeInternships,
     required this.totalCompanies,
     required this.completionRate,
+    required this.studentsWithPlacement,
   });
 
   factory AdminStats.empty() {
@@ -32,8 +34,39 @@ class AdminStats {
       activeInternships: 0,
       totalCompanies: 0,
       completionRate: 0.0,
+      studentsWithPlacement: 0,
     );
   }
+}
+
+class StudentPlacementReportRow {
+  final String studentName;
+  final String registrationNumber;
+  final String program;
+  final String internshipStatus;
+  final String supervisorName;
+  final String companyName;
+  final String district;
+
+  const StudentPlacementReportRow({
+    required this.studentName,
+    required this.registrationNumber,
+    required this.program,
+    required this.internshipStatus,
+    required this.supervisorName,
+    required this.companyName,
+    required this.district,
+  });
+}
+
+class DistrictAllocationStat {
+  final String district;
+  final int studentCount;
+
+  const DistrictAllocationStat({
+    required this.district,
+    required this.studentCount,
+  });
 }
 
 // ============================================================================
@@ -75,50 +108,27 @@ final adminStatsProvider = FutureProvider<AdminStats>((ref) async {
     final totalSupervisors = results[1].count ?? 0;
     final pendingApprovals = results[2].count ?? 0;
 
-    // TODO: Add these queries when collections are ready
-    // Query internships collection for active internships
-    int activeInternships = 0;
-    try {
-      final internshipsSnapshot = await firestore
-          .collection('internships')
-          .where('status', isEqualTo: 'active')
-          .count()
-          .get();
-      activeInternships = internshipsSnapshot.count ?? 0;
-    } catch (e) {
-      // Collection doesn't exist yet
-      activeInternships = 0;
-    }
+    final placementsSnapshot = await firestore.collection('placements').get();
+    final companiesSnapshot = await firestore.collection('companies').count().get();
 
-    // Query companies collection
-    int totalCompanies = 0;
-    try {
-      final companiesSnapshot = await firestore
-          .collection('companies')
-          .count()
-          .get();
-      totalCompanies = companiesSnapshot.count ?? 0;
-    } catch (e) {
-      // Collection doesn't exist yet
-      totalCompanies = 0;
-    }
-
-    // Calculate completion rate
-    double completionRate = 0.0;
-    try {
-      if (activeInternships > 0) {
-        final completedSnapshot = await firestore
-            .collection('internships')
-            .where('status', isEqualTo: 'completed')
-            .count()
-            .get();
-        final completed = completedSnapshot.count ?? 0;
-        final total = activeInternships + completed;
-        completionRate = total > 0 ? (completed / total) * 100 : 0.0;
-      }
-    } catch (e) {
-      completionRate = 0.0;
-    }
+    final placementDocs = placementsSnapshot.docs;
+    final activeInternships = placementDocs.where((doc) {
+      final status = doc.data()['status'] as String? ?? '';
+      return status == 'approved' || status == 'active' || status == 'extended';
+    }).length;
+    final completedCount = placementDocs.where((doc) {
+      final status = doc.data()['status'] as String? ?? '';
+      return status == 'completed';
+    }).length;
+    final totalPlacements = placementDocs.length;
+    final completionRate =
+        totalPlacements == 0 ? 0.0 : (completedCount / totalPlacements) * 100;
+    final studentsWithPlacement = placementDocs
+        .map((doc) => doc.data()['studentId'] as String?)
+        .whereType<String>()
+        .toSet()
+        .length;
+    final totalCompanies = companiesSnapshot.count ?? 0;
 
     return AdminStats(
       totalStudents: totalStudents,
@@ -127,10 +137,116 @@ final adminStatsProvider = FutureProvider<AdminStats>((ref) async {
       activeInternships: activeInternships,
       totalCompanies: totalCompanies,
       completionRate: completionRate,
+      studentsWithPlacement: studentsWithPlacement,
     );
   } catch (e) {
     throw Exception('Failed to load admin stats: $e');
   }
+});
+
+String _normalizeDistrict(Map<String, dynamic>? company) {
+  if (company == null) return 'Unassigned';
+
+  final city = (company['city'] as String?)?.trim();
+  if (city != null && city.isNotEmpty) return _titleCase(city);
+
+  final location = (company['location'] as String?)?.trim();
+  if (location != null && location.isNotEmpty) {
+    final normalized = location.split(',').first.trim();
+    return _titleCase(normalized);
+  }
+
+  final address = (company['address'] as String?)?.trim();
+  if (address != null && address.isNotEmpty) {
+    final normalized = address.split(',').first.trim();
+    return _titleCase(normalized);
+  }
+
+  return 'Unassigned';
+}
+
+String _titleCase(String value) {
+  return value
+      .split(' ')
+      .where((part) => part.isNotEmpty)
+      .map((part) =>
+          '${part[0].toUpperCase()}${part.substring(1).toLowerCase()}')
+      .join(' ');
+}
+
+final studentPlacementReportProvider =
+    FutureProvider<List<StudentPlacementReportRow>>((ref) async {
+  final firestore = ref.watch(firestoreProvider);
+
+  final studentsSnapshot = await firestore.collection('students').get();
+  final placementsSnapshot = await firestore.collection('placements').get();
+  final supervisorsSnapshot = await firestore.collection('supervisorProfiles').get();
+  final companiesSnapshot = await firestore.collection('companies').get();
+
+  final placementsById = {
+    for (final doc in placementsSnapshot.docs) doc.id: doc.data(),
+  };
+  final placementsByStudentId = {
+    for (final doc in placementsSnapshot.docs)
+      if ((doc.data()['studentId'] as String?) != null)
+        doc.data()['studentId'] as String: doc.data(),
+  };
+  final supervisorsById = {
+    for (final doc in supervisorsSnapshot.docs) doc.id: doc.data(),
+  };
+  final companiesById = {
+    for (final doc in companiesSnapshot.docs) doc.id: doc.data(),
+  };
+
+  final rows = studentsSnapshot.docs.map((doc) {
+    final data = doc.data();
+    final currentPlacementId = data['currentPlacementId'] as String?;
+    final placement = currentPlacementId != null
+        ? placementsById[currentPlacementId]
+        : placementsByStudentId[doc.id];
+    final companyId = placement?['companyId'] as String?;
+    final company = companyId != null ? companiesById[companyId] : null;
+    final supervisorId = data['currentSupervisorId'] as String?;
+    final supervisor = supervisorId != null ? supervisorsById[supervisorId] : null;
+
+    return StudentPlacementReportRow(
+      studentName: (data['fullName'] as String?) ?? 'Unknown student',
+      registrationNumber:
+          (data['registrationNumber'] as String?) ?? 'N/A',
+      program: (data['program'] as String?) ?? 'N/A',
+      internshipStatus:
+          (data['internshipStatus'] as String?) ?? 'notStarted',
+      supervisorName: (supervisor?['fullName'] as String?) ?? 'Not assigned',
+      companyName: (company?['name'] as String?) ?? 'Not yet allocated',
+      district: _normalizeDistrict(company),
+    );
+  }).toList()
+    ..sort((a, b) => a.studentName.compareTo(b.studentName));
+
+  return rows;
+});
+
+final districtAllocationStatsProvider =
+    FutureProvider<List<DistrictAllocationStat>>((ref) async {
+  final rows = await ref.watch(studentPlacementReportProvider.future);
+  final counts = <String, int>{};
+
+  for (final row in rows) {
+    if (row.companyName == 'Not yet allocated') continue;
+    counts[row.district] = (counts[row.district] ?? 0) + 1;
+  }
+
+  final stats = counts.entries
+      .map(
+        (entry) => DistrictAllocationStat(
+          district: entry.key,
+          studentCount: entry.value,
+        ),
+      )
+      .toList()
+    ..sort((a, b) => b.studentCount.compareTo(a.studentCount));
+
+  return stats;
 });
 
 // ============================================================================

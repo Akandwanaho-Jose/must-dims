@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dims/core/widgets/brand_app_bar_title.dart';
 
 import '../../../logbook/data/models/weekly_logbook_summary_model.dart';
 import '../../../supervisor/presentation/screens/weekly_summary_review_screen.dart';
@@ -74,7 +75,11 @@ class CompanySupervisorDashboard extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Company Supervisor Dashboard'),
+        toolbarHeight: 72,
+        title: const BrandAppBarTitle(
+          title: 'Company Supervisor',
+          subtitle: 'MUST Internship Placement Portal',
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -156,7 +161,8 @@ class CompanySupervisorDashboard extends ConsumerWidget {
                       Expanded(
                         child: Consumer(
                           builder: (context, ref, child) {
-                            final weeklyCount = ref.watch(pendingCompanyReviewsCountProvider);
+                            final weeklyCount =
+                                ref.watch(pendingCompanyReviewsCountProvider);
                             return _StatCard(
                               title: 'Pending Reviews',
                               value: weeklyCount.toString(),

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:dims/core/widgets/brand_app_bar_title.dart';
 
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/student_controllers.dart';
@@ -137,10 +138,10 @@ class StudentDashboard extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('DIMS Student'),
-        titleTextStyle: const TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 18,
+        toolbarHeight: 72,
+        title: const BrandAppBarTitle(
+          title: 'Student Dashboard',
+          subtitle: 'MUST Digital Internship Management System',
         ),
         actions: [
           IconButton(
@@ -157,12 +158,11 @@ class StudentDashboard extends ConsumerWidget {
               },
               child: CircleAvatar(
                 radius: 18,
-                backgroundColor:
-                    Theme.of(context).colorScheme.primaryContainer,
+                backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
                 child: Text(
                   user?.email?.substring(0, 1).toUpperCase() ?? 'S',
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    color: Theme.of(context).colorScheme.onSecondaryContainer,
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
@@ -193,6 +193,7 @@ class StudentDashboard extends ConsumerWidget {
         ],
       ),
       bottomNavigationBar: NavigationBar(
+        height: 72,
         selectedIndex: selectedTab,
         onDestinationSelected: (index) {
           ref.read(selectedStudentTabProvider.notifier).state = index;

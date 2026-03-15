@@ -1,9 +1,8 @@
-import 'package:dims/features/auth/controllers/auth_controller.dart';
 import 'package:dims/core/utils/lib/core/validators.dart';
+import 'package:dims/features/auth/controllers/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-// Added these two for the "trick" logic
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -127,19 +126,32 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // MUST Logo - LONG PRESS HERE FOR THE TRICK
                   GestureDetector(
-                    onLongPress: _createDevAdmin, // <--- Hidden Trigger
+                    onLongPress: _createDevAdmin,
                     child: Container(
-                      padding: const EdgeInsets.all(20),
+                      width: 118,
+                      height: 118,
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer,
+                        color: Colors.white,
                         shape: BoxShape.circle,
+                        border: Border.all(
+                          color: colorScheme.secondary.withOpacity(0.65),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colorScheme.primary.withOpacity(0.12),
+                            blurRadius: 18,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
                       ),
-                      child: Icon(
-                        Icons.school_rounded,
-                        size: 64,
-                        color: colorScheme.primary,
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/icons/must logo.png',
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                   ),

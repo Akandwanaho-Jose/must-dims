@@ -4,6 +4,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dims/features/admin/controllers/users_management_controller.dart';
 import 'package:dims/features/auth/data/models/user_model.dart';
 
+const List<String> _studentLevelOptions = [
+  'Year One',
+  'Year Two',
+  'Year Three',
+  'Year Four',
+];
+
+const List<String> _studentProgramOptions = [
+  'Bachelor of Information Technology',
+  'Bachelor of Computer Science',
+  'Bachelor of Software Engineering',
+];
+
 class UsersManagementPage extends ConsumerStatefulWidget {
   const UsersManagementPage({super.key});
 
@@ -185,13 +198,13 @@ class _UsersListView extends ConsumerWidget {
   }
 }
 
-class _UserCard extends StatelessWidget {
+class _UserCard extends ConsumerWidget {
   final UserModel user;
 
   const _UserCard({required this.user});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
     return Card(
@@ -241,14 +254,14 @@ class _UserCard extends StatelessWidget {
           icon: const Icon(Icons.more_vert),
           onPressed: () {
             // Show options menu
-            _showUserOptions(context, user);
+            _showUserOptions(context, ref, user);
           },
         ),
       ),
     );
   }
 
-  void _showUserOptions(BuildContext context, UserModel user) {
+  void _showUserOptions(BuildContext context, WidgetRef ref, UserModel user) {
     showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
@@ -268,7 +281,7 @@ class _UserCard extends StatelessWidget {
               title: const Text('Edit User'),
               onTap: () {
                 Navigator.pop(context);
-                // Navigate to edit user
+                _showEditUserDialog(context, ref, user);
               },
             ),
             ListTile(
@@ -276,12 +289,408 @@ class _UserCard extends StatelessWidget {
               title: const Text('Deactivate User'),
               onTap: () {
                 Navigator.pop(context);
-                // Show confirmation dialog
+                _confirmDeactivate(context, ref, user);
               },
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDeactivate(
+    BuildContext context,
+    WidgetRef ref,
+    UserModel user,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Deactivate user?'),
+        content: Text(
+          'This will disable ${user.displayName ?? user.email} from active access.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Deactivate'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await ref
+          .read(usersManagementControllerProvider)
+          .deactivateUser(user.uid);
+
+      ref.invalidate(approvedUsersProvider(user.role));
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${user.displayName ?? user.email} deactivated')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to deactivate user: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _showEditUserDialog(
+    BuildContext context,
+    WidgetRef ref,
+    UserModel user,
+  ) async {
+    final controller = ref.read(usersManagementControllerProvider);
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return FutureBuilder<Map<String, dynamic>>(
+          future: controller.getRoleDetails(user),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const AlertDialog(
+                content: SizedBox(
+                  height: 96,
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              );
+            }
+
+            if (snapshot.hasError) {
+              return AlertDialog(
+                title: const Text('Unable to load user'),
+                content: Text(snapshot.error.toString()),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Close'),
+                  ),
+                ],
+              );
+            }
+
+            return _EditUserDialog(
+              user: user,
+              roleDetails: snapshot.data ?? const <String, dynamic>{},
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _EditUserDialog extends ConsumerStatefulWidget {
+  final UserModel user;
+  final Map<String, dynamic> roleDetails;
+
+  const _EditUserDialog({
+    required this.user,
+    required this.roleDetails,
+  });
+
+  @override
+  ConsumerState<_EditUserDialog> createState() => _EditUserDialogState();
+}
+
+class _EditUserDialogState extends ConsumerState<_EditUserDialog> {
+  final _formKey = GlobalKey<FormState>();
+
+  late final TextEditingController _nameController;
+  late final TextEditingController _phoneController;
+  late final TextEditingController _registrationController;
+  late final TextEditingController _academicYearController;
+  late final TextEditingController _departmentController;
+
+  String? _selectedProgram;
+  String? _selectedLevel;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(
+      text: widget.user.displayName ?? widget.roleDetails['fullName'] ?? '',
+    );
+    _phoneController = TextEditingController(
+      text:
+          widget.user.phoneNumber ?? widget.roleDetails['phoneNumber'] ?? '',
+    );
+    _registrationController = TextEditingController(
+      text: widget.roleDetails['registrationNumber'] ?? '',
+    );
+    _academicYearController = TextEditingController(
+      text: '${widget.roleDetails['academicYear'] ?? ''}',
+    );
+    _departmentController = TextEditingController(
+      text: widget.roleDetails['department'] ?? '',
+    );
+    final storedProgram = widget.roleDetails['program'] as String?;
+    final storedLevel = widget.roleDetails['currentLevel'] as String?;
+    _selectedProgram = _studentProgramOptions.contains(storedProgram)
+        ? storedProgram
+        : null;
+    _selectedLevel = _studentLevelOptions.contains(storedLevel)
+        ? storedLevel
+        : null;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _registrationController.dispose();
+    _academicYearController.dispose();
+    _departmentController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isStudent = widget.user.role == UserRole.student;
+    final title = 'Edit ${widget.user.role.name}';
+
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(28),
+      ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 520,
+          maxHeight: MediaQuery.of(context).size.height * 0.86,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: _isSaving ? null : () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: _nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Full name',
+                            prefixIcon: Icon(Icons.person_outline),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Full name is required';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          initialValue: widget.user.email,
+                          enabled: false,
+                          decoration: const InputDecoration(
+                            labelText: 'Email',
+                            prefixIcon: Icon(Icons.email_outlined),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _phoneController,
+                          decoration: const InputDecoration(
+                            labelText: 'Phone number',
+                            prefixIcon: Icon(Icons.phone_outlined),
+                          ),
+                        ),
+                        if (isStudent) ...[
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _registrationController,
+                            decoration: const InputDecoration(
+                              labelText: 'Registration number',
+                              prefixIcon: Icon(Icons.badge_outlined),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          DropdownButtonFormField<String>(
+                            value: _selectedProgram,
+                            isExpanded: true,
+                            menuMaxHeight: 320,
+                            decoration: const InputDecoration(
+                              labelText: 'Program',
+                              prefixIcon: Icon(Icons.school_outlined),
+                            ),
+                            items: _studentProgramOptions
+                                .map(
+                                  (program) => DropdownMenuItem<String>(
+                                    value: program,
+                                    child: Text(
+                                      program,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) =>
+                                setState(() => _selectedProgram = value),
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _academicYearController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'Academic year',
+                              prefixIcon: Icon(Icons.calendar_today_outlined),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          DropdownButtonFormField<String>(
+                            value: _selectedLevel,
+                            isExpanded: true,
+                            menuMaxHeight: 280,
+                            decoration: const InputDecoration(
+                              labelText: 'Current level',
+                              prefixIcon: Icon(Icons.grade_outlined),
+                            ),
+                            items: _studentLevelOptions
+                                .map(
+                                  (level) => DropdownMenuItem<String>(
+                                    value: level,
+                                    child: Text(level),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) =>
+                                setState(() => _selectedLevel = value),
+                          ),
+                        ] else ...[
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _departmentController,
+                            decoration: const InputDecoration(
+                              labelText: 'Department',
+                              prefixIcon: Icon(Icons.account_tree_outlined),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compact = constraints.maxWidth < 360;
+                    if (compact) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          FilledButton(
+                            onPressed: _isSaving ? null : _saveChanges,
+                            child: Text(_isSaving ? 'Saving...' : 'Save changes'),
+                          ),
+                          const SizedBox(height: 10),
+                          OutlinedButton(
+                            onPressed:
+                                _isSaving ? null : () => Navigator.pop(context),
+                            child: const Text('Cancel'),
+                          ),
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      children: [
+                        OutlinedButton(
+                          onPressed:
+                              _isSaving ? null : () => Navigator.pop(context),
+                          child: const Text('Cancel'),
+                        ),
+                        const Spacer(),
+                        FilledButton(
+                          onPressed: _isSaving ? null : _saveChanges,
+                          child: Text(_isSaving ? 'Saving...' : 'Save changes'),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _saveChanges() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      await ref.read(usersManagementControllerProvider).updateManagedUserProfile(
+            user: widget.user,
+            displayName: _nameController.text,
+            phoneNumber: _phoneController.text,
+            registrationNumber: _registrationController.text,
+            program: _selectedProgram,
+            academicYear: int.tryParse(_academicYearController.text.trim()),
+            currentLevel: _selectedLevel,
+            department: _departmentController.text,
+          );
+
+      ref.invalidate(approvedUsersProvider(widget.user.role));
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${widget.user.displayName ?? widget.user.email} updated successfully',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update user: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
   }
 }

@@ -13,6 +13,13 @@ const List<String> fciPrograms = [
   'Bachelor of Software Engineering',
 ];
 
+const List<String> studentLevels = [
+  'Year One',
+  'Year Two',
+  'Year Three',
+  'Year Four',
+];
+
 class CompleteProfilePage extends ConsumerStatefulWidget {
   const CompleteProfilePage({super.key});
 
@@ -26,10 +33,10 @@ class _CompleteProfilePageState extends ConsumerState<CompleteProfilePage> {
   // Controllers for text fields
   final _registrationNumberController = TextEditingController();
   final _academicYearController = TextEditingController();
-  final _currentLevelController = TextEditingController();
 
   // Dropdown value for program
   String? _selectedProgram;
+  String? _selectedLevel;
 
   bool _isLoading = false;
 
@@ -37,7 +44,6 @@ class _CompleteProfilePageState extends ConsumerState<CompleteProfilePage> {
   void dispose() {
     _registrationNumberController.dispose();
     _academicYearController.dispose();
-    _currentLevelController.dispose();
     super.dispose();
   }
 
@@ -60,7 +66,7 @@ class _CompleteProfilePageState extends ConsumerState<CompleteProfilePage> {
       print('Registration: ${_registrationNumberController.text.trim()}');
       print('Program: $_selectedProgram');
       print('Year: ${_academicYearController.text.trim()}');
-      print('Level: ${_currentLevelController.text.trim()}');
+      print('Level: $_selectedLevel');
 
       // Create complete profile
       final profile = StudentProfileModel(
@@ -69,7 +75,7 @@ class _CompleteProfilePageState extends ConsumerState<CompleteProfilePage> {
         registrationNumber: _registrationNumberController.text.trim(),
         program: _selectedProgram!,
         academicYear: int.parse(_academicYearController.text.trim()),
-        currentLevel: _currentLevelController.text.trim(),
+        currentLevel: _selectedLevel!,
         status: 'active',
         internshipStatus: StudentInternshipStatus.notStarted,
         progressPercentage: 0.0,
@@ -262,15 +268,26 @@ class _CompleteProfilePageState extends ConsumerState<CompleteProfilePage> {
                 const SizedBox(height: 16),
 
                 // Current Level
-                TextFormField(
-                  controller: _currentLevelController,
+                DropdownButtonFormField<String>(
+                  value: _selectedLevel,
+                  isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Current Level',
-                    hintText: 'e.g., Year 3 or Level 300',
+                    hintText: 'Select your current year of study',
                     prefixIcon: Icon(Icons.grade_outlined),
                     border: OutlineInputBorder(),
                   ),
-                  textInputAction: TextInputAction.done,
+                  items: studentLevels.map((level) {
+                    return DropdownMenuItem<String>(
+                      value: level,
+                      child: Text(level),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedLevel = value;
+                    });
+                  },
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Current level is required';

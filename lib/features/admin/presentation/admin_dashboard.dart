@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:dims/core/widgets/brand_app_bar_title.dart';
+import 'package:dims/core/theme/must_theme.dart';
 
 import '../../auth/controllers/auth_controller.dart';
 import 'pages/overview_page.dart';
@@ -29,7 +31,11 @@ class AdminDashboard extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_getPageTitle(selectedTab)),
+        toolbarHeight: 72,
+        title: BrandAppBarTitle(
+          title: _getPageTitle(selectedTab),
+          subtitle: 'MUST Administration',
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -104,16 +110,44 @@ class _AdminDrawer extends ConsumerWidget {
           // Header
           DrawerHeader(
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  MustBrandColors.green,
+                  MustBrandColors.greenLight,
+                ],
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Icon(
-                  Icons.admin_panel_settings,
-                  size: 48,
-                  color: theme.colorScheme.onPrimary,
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: MustBrandColors.gold, width: 1.5),
+                      ),
+                      padding: const EdgeInsets.all(4),
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/icons/must logo.png',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Icon(
+                      Icons.admin_panel_settings,
+                      size: 34,
+                      color: theme.colorScheme.onPrimary,
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 Text(

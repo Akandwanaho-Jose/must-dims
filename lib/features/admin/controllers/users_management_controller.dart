@@ -39,6 +39,24 @@ class UsersManagementController {
   UsersManagementController(this._ref);
   
   FirebaseFirestore get _db => _ref.read(firestoreProvider);
+
+  Future<Map<String, dynamic>> getRoleDetails(UserModel user) async {
+    try {
+      switch (user.role) {
+        case UserRole.student:
+          final doc = await _db.collection('students').doc(user.uid).get();
+          return doc.data() ?? <String, dynamic>{};
+        case UserRole.supervisor:
+          final doc =
+              await _db.collection('supervisorProfiles').doc(user.uid).get();
+          return doc.data() ?? <String, dynamic>{};
+        default:
+          return <String, dynamic>{};
+      }
+    } catch (e) {
+      throw Exception('Failed to load user details: $e');
+    }
+  }
   
   /// Deactivate a user account
   Future<void> deactivateUser(String uid) async {
@@ -71,6 +89,59 @@ class UsersManagementController {
     } catch (e) {
       throw Exception('Failed to update user: $e');
     }
+  }
+
+  Future<void> updateManagedUserProfile({
+    required UserModel user,
+    required String displayName,
+    required String? phoneNumber,
+    String? registrationNumber,
+    String? program,
+    int? academicYear,
+    String? currentLevel,
+    String? department,
+  }) async {
+    final batch = _db.batch();
+    final trimmedPhone = phoneNumber?.trim();
+
+    batch.update(_db.collection('users').doc(user.uid), {
+      'displayName': displayName.trim(),
+      'phoneNumber':
+          trimmedPhone == null || trimmedPhone.isEmpty ? null : trimmedPhone,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    if (user.role == UserRole.student) {
+      batch.set(
+        _db.collection('students').doc(user.uid),
+        {
+          'fullName': displayName.trim(),
+          'registrationNumber': registrationNumber?.trim(),
+          'program': program,
+          'academicYear': academicYear,
+          'currentLevel': currentLevel,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }..removeWhere((key, value) => value == null),
+        SetOptions(merge: true),
+      );
+    }
+
+    if (user.role == UserRole.supervisor) {
+      batch.set(
+        _db.collection('supervisorProfiles').doc(user.uid),
+        {
+          'fullName': displayName.trim(),
+          'email': user.email,
+          'phoneNumber':
+              trimmedPhone == null || trimmedPhone.isEmpty ? null : trimmedPhone,
+          'department': department?.trim(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }..removeWhere((key, value) => value == null),
+        SetOptions(merge: true),
+      );
+    }
+
+    await batch.commit();
   }
   
   /// Delete user permanently

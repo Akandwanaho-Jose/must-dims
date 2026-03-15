@@ -206,6 +206,7 @@ class _EnhancedLogbookFormPageState extends ConsumerState<EnhancedLogbookFormPag
     final placementAsync = ref.watch(studentActivePlacementProvider);
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
   title: const Text('Submit Weekly Logbook'),
   leading: IconButton(
@@ -445,6 +446,7 @@ class _EnhancedLogbookFormPageState extends ConsumerState<EnhancedLogbookFormPag
                           child: const Text('Submit Logbook'),
                         ),
                       ),
+                      const SizedBox(height: 24),
                     ],
                   ),
                 );

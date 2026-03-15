@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dims/core/navigation/app_router.dart';
+import 'package:dims/core/theme/must_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,10 +38,7 @@ class DWMBIMSApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'DIMS - MUST',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
+      theme: MustTheme.light,
       routerConfig: router,
     );
   }

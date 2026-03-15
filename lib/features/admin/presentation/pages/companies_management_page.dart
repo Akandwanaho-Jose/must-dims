@@ -525,16 +525,47 @@ class _CompanyFormDialogState extends State<_CompanyFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(widget.company == null ? 'Add Company' : 'Edit Company'),
-      content: SizedBox(
-        width: 500,
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
+    final title = widget.company == null ? 'Add Company' : 'Edit Company';
+
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(28),
+      ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 540,
+          maxHeight: MediaQuery.of(context).size.height * 0.86,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+          child: Form(
+            key: _formKey,
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: _isLoading ? null : () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Column(
+                      children: [
                 TextFormField(
                   controller: _nameController,
                   decoration: const InputDecoration(
@@ -643,6 +674,7 @@ class _CompanyFormDialogState extends State<_CompanyFormDialog> {
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
+                  runSpacing: 8,
                   children: _availablePrograms.map((program) {
                     final isSelected = _selectedPrograms.contains(program);
                     return FilterChip(
@@ -659,28 +691,64 @@ class _CompanyFormDialogState extends State<_CompanyFormDialog> {
                       },
                     );
                   }).toList(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compact = constraints.maxWidth < 360;
+                    if (compact) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          FilledButton(
+                            onPressed: _isLoading ? null : _saveCompany,
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 16,
+                                    width: 16,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : Text(widget.company == null ? 'Add Company' : 'Save'),
+                          ),
+                          const SizedBox(height: 10),
+                          OutlinedButton(
+                            onPressed:
+                                _isLoading ? null : () => Navigator.pop(context),
+                            child: const Text('Cancel'),
+                          ),
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      children: [
+                        OutlinedButton(
+                          onPressed:
+                              _isLoading ? null : () => Navigator.pop(context),
+                          child: const Text('Cancel'),
+                        ),
+                        const Spacer(),
+                        FilledButton(
+                          onPressed: _isLoading ? null : _saveCompany,
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 16,
+                                  width: 16,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : Text(widget.company == null ? 'Add Company' : 'Save'),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),
           ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: _isLoading ? null : () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: _isLoading ? null : _saveCompany,
-          child: _isLoading
-              ? const SizedBox(
-                  height: 16,
-                  width: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(widget.company == null ? 'Add' : 'Save'),
-        ),
-      ],
     );
   }
 }

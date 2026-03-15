@@ -7,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:dims/core/widgets/brand_app_bar_title.dart';
 
 import '../../../companies/data/models/company_model.dart';
 import '../../../placements/data/models/placement_model.dart';
@@ -124,6 +125,12 @@ class _UploadAcceptanceLetterPageState
   bool _validateStep(int step) {
     switch (step) {
       case 0:
+        if (_universitySupervisorId == null) {
+          _showError(
+            'You must first be allocated a university supervisor before submitting an acceptance letter.',
+          );
+          return false;
+        }
         if (_selectedCompanyId == null) {
           _showError('Please select a company to continue.');
           return false;
@@ -148,6 +155,136 @@ class _UploadAcceptanceLetterPageState
         return true;
       default:
         return false;
+    }
+  }
+
+  Future<void> _openCompanyPicker(List<CompanyModel> companies) async {
+    final searchController = TextEditingController();
+    List<CompanyModel> filtered = List<CompanyModel>.from(companies);
+
+    final selected = await showModalBottomSheet<CompanyModel>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 20,
+                  right: 20,
+                  top: 12,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                ),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.72,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Select Company',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: searchController,
+                        decoration: const InputDecoration(
+                          hintText: 'Search by company, district, or industry',
+                          prefixIcon: Icon(Icons.search),
+                        ),
+                        onChanged: (value) {
+                          setModalState(() {
+                            final query = value.trim().toLowerCase();
+                            filtered = companies.where((company) {
+                              return company.name.toLowerCase().contains(query) ||
+                                  company.location.toLowerCase().contains(query) ||
+                                  company.industry.toLowerCase().contains(query);
+                            }).toList();
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: filtered.isEmpty
+                            ? const Center(
+                                child: Text('No companies match your search'),
+                              )
+                            : ListView.separated(
+                                itemCount: filtered.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(height: 8),
+                                itemBuilder: (context, index) {
+                                  final company = filtered[index];
+                                  final isSelected =
+                                      company.id == _selectedCompanyId;
+                                  return ListTile(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                      side: BorderSide(
+                                        color: isSelected
+                                            ? Theme.of(context)
+                                                .colorScheme
+                                                .primary
+                                            : Theme.of(context)
+                                                .colorScheme
+                                                .outlineVariant,
+                                      ),
+                                    ),
+                                    tileColor: isSelected
+                                        ? Theme.of(context)
+                                            .colorScheme
+                                            .primaryContainer
+                                            .withOpacity(0.35)
+                                        : Colors.white,
+                                    leading: CircleAvatar(
+                                      backgroundColor: Theme.of(context)
+                                          .colorScheme
+                                          .secondaryContainer,
+                                      child: const Icon(Icons.business_outlined),
+                                    ),
+                                    title: Text(
+                                      company.name,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      '${company.industry} • ${company.location}',
+                                    ),
+                                    trailing: isSelected
+                                        ? Icon(
+                                            Icons.check_circle,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary,
+                                          )
+                                        : const Icon(Icons.chevron_right),
+                                    onTap: () => Navigator.pop(context, company),
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    searchController.dispose();
+
+    if (selected != null && mounted) {
+      setState(() {
+        _selectedCompanyId = selected.id;
+        _selectedCompany = selected;
+      });
     }
   }
 
@@ -242,6 +379,11 @@ class _UploadAcceptanceLetterPageState
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('Not logged in');
+      if (_universitySupervisorId == null) {
+        throw Exception(
+          'You must first be allocated a university supervisor before submitting.',
+        );
+      }
 
       // 1. Upload file to Firebase Storage
       final storageFileName =
@@ -413,36 +555,49 @@ class _UploadAcceptanceLetterPageState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Apply for Internship'),
+        toolbarHeight: 72,
+        title: const BrandAppBarTitle(
+          title: 'Apply for Internship',
+          subtitle: 'MUST Student Placement Journey',
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/student/dashboard'),
         ),
         elevation: 0,
       ),
-      body: _isUploading
-          ? _buildUploadingState()
-          : Column(
-              children: [
-                _buildStepIndicator(theme),
-                Expanded(
-                  child: PageView(
-                    controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      _buildStep1CompanyAndSupervisor(theme),
-                      _buildStep2UploadLetter(theme),
-                      _buildStep3ReviewAndSubmit(theme),
-                    ],
-                  ),
-                ),
-                _buildBottomNavigation(theme),
-              ],
+      bottomNavigationBar: _isUploading || keyboardOpen
+          ? null
+          : SafeArea(
+              top: false,
+              child: _buildBottomNavigation(theme),
             ),
+      body: SafeArea(
+        child: _isUploading
+            ? _buildUploadingState()
+            : Column(
+                children: [
+                  _buildStepIndicator(theme),
+                  Expanded(
+                    child: PageView(
+                      controller: _pageController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: [
+                        _buildStep1CompanyAndSupervisor(theme),
+                        _buildStep2UploadLetter(theme),
+                        _buildStep3ReviewAndSubmit(theme),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+      ),
     );
   }
 
@@ -559,6 +714,49 @@ class _UploadAcceptanceLetterPageState
     );
   }
 
+  Widget _buildCompanySelector(List<CompanyModel> companies) {
+    if (companies.isEmpty) return _EmptyCompaniesCard();
+
+    return InkWell(
+      onTap:
+          _universitySupervisorId == null ? null : () => _openCompanyPicker(companies),
+      borderRadius: BorderRadius.circular(16),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          hintText: 'Select a company',
+          prefixIcon: const Icon(Icons.search),
+          suffixIcon: const Icon(Icons.keyboard_arrow_down_rounded),
+          enabled: _universitySupervisorId != null,
+        ),
+        child: _selectedCompany == null
+            ? Text(
+                _universitySupervisorId == null
+                    ? 'Awaiting university supervisor allocation'
+                    : 'Tap to browse companies',
+                style: TextStyle(color: Colors.grey.shade600),
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _selectedCompany!.name,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${_selectedCompany!.industry} • ${_selectedCompany!.location}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
   // ── Step 1: Company & Supervisor ─────────────────────────────────────────
 
   Widget _buildStep1CompanyAndSupervisor(ThemeData theme) {
@@ -610,6 +808,28 @@ class _UploadAcceptanceLetterPageState
                 ],
               ),
             ),
+          if (_universitySupervisorName == null)
+            Container(
+              margin: const EdgeInsets.only(bottom: 24),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.info_outline, color: Colors.orange.shade700),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'You cannot submit an acceptance letter until the university assigns you a supervisor.',
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
           _SectionHeader(
             icon: Icons.business,
@@ -620,6 +840,7 @@ class _UploadAcceptanceLetterPageState
           const SizedBox(height: 16),
           companiesAsync.when(
             data: (companies) {
+              return _buildCompanySelector(companies);
               if (companies.isEmpty) return _EmptyCompaniesCard();
               return DropdownButtonFormField<String>(
                 decoration: InputDecoration(
@@ -726,7 +947,7 @@ class _UploadAcceptanceLetterPageState
             keyboardType: TextInputType.number,
             hint: '12',
           ),
-          const SizedBox(height: 80),
+          const SizedBox(height: 120),
         ],
       ),
     );
@@ -839,7 +1060,7 @@ class _UploadAcceptanceLetterPageState
               filled: true,
             ),
           ),
-          const SizedBox(height: 80),
+          const SizedBox(height: 120),
         ],
       ),
     );
@@ -959,7 +1180,7 @@ class _UploadAcceptanceLetterPageState
               ],
             ),
           ),
-          const SizedBox(height: 80),
+          const SizedBox(height: 120),
         ],
       ),
     );
@@ -970,7 +1191,7 @@ class _UploadAcceptanceLetterPageState
   Widget _buildBottomNavigation(ThemeData theme) {
     final isLastStep = _currentStep == _totalSteps - 1;
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         boxShadow: [

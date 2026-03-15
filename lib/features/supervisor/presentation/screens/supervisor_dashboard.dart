@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dims/core/widgets/brand_app_bar_title.dart';
 import '../../../auth/controllers/auth_controller.dart';
 import 'supervisor_overview_content.dart';
 import 'supervisor_profile_screen.dart';
@@ -24,7 +25,11 @@ class _SupervisorDashboardState extends State<SupervisorDashboard> {
     return Scaffold(
       // Move the AppBar here so it's always present
       appBar: AppBar(
-        title: Text(_currentIndex == 0 ? 'Supervisor Dashboard' : 'My Profile'),
+        toolbarHeight: 72,
+        title: BrandAppBarTitle(
+          title: _currentIndex == 0 ? 'Supervisor Dashboard' : 'Supervisor Profile',
+          subtitle: 'Mbarara University of Science and Technology',
+        ),
         actions: [
           // Emergency Logout Button - This ensures you never get stuck!
           Consumer(

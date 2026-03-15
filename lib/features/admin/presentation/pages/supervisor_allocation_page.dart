@@ -318,33 +318,6 @@ class SupervisorAllocationPage extends ConsumerWidget {
                   ),
                 ),
 
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.info_outline, color: theme.colorScheme.primary),
-                          const SizedBox(width: 12),
-                          Text('About Allocation', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text('The algorithm distributes students fairly based on:', style: theme.textTheme.bodyMedium),
-                      const SizedBox(height: 8),
-                      _buildBulletPoint('Program matching (preferred programs)'),
-                      _buildBulletPoint('Load balancing (current vs max capacity)'),
-                      _buildBulletPoint('Supervisor availability'),
-                      _buildBulletPoint('Score-based assignment for optimal distribution'),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
               // Stats Grid - 3 cards showing Total, Assigned, Unassigned
               Row(
                 children: [
@@ -412,34 +385,16 @@ class SupervisorAllocationPage extends ConsumerWidget {
               const SizedBox(height: 32),
 
               Center(
-                child: Column(
-                  children: [
-                    FilledButton.icon(
-                      onPressed: unassignedAsync.value?.isEmpty ?? true
-                          ? null
-                          : () => _runAutoAssignment(context, ref),
-                      icon: const Icon(Icons.auto_awesome),
-                      label: const Text('Run Auto Assignment'),
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                        minimumSize: const Size(280, 56),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Manual assignment coming soon')),
-                        );
-                      },
-                      icon: const Icon(Icons.edit),
-                      label: const Text('Manual Assignment'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                        minimumSize: const Size(280, 56),
-                      ),
-                    ),
-                  ],
+                child: FilledButton.icon(
+                  onPressed: unassignedAsync.value?.isEmpty ?? true
+                      ? null
+                      : () => _runAutoAssignment(context, ref),
+                  icon: const Icon(Icons.auto_awesome),
+                  label: const Text('Run Auto Assignment'),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    minimumSize: const Size(280, 56),
+                  ),
                 ),
               ),
 
@@ -587,18 +542,6 @@ class SupervisorAllocationPage extends ConsumerWidget {
     }
   }
 
-  Widget _buildBulletPoint(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16, top: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('• ', style: TextStyle(fontSize: 16)),
-          Expanded(child: Text(text)),
-        ],
-      ),
-    );
-  }
 }
 
 class _StatCard extends StatelessWidget {
