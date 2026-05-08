@@ -2,12 +2,10 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
+    // Presentation/demo mode: keep uploads and downloads unblocked.
+    // Tighten these rules again before using real student data in production.
     match /{allPaths=**} {
-      allow read, write: if isSignedIn();
+      allow read, write: if true;
     }
   }
 }

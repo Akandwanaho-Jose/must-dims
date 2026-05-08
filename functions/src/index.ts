@@ -68,6 +68,10 @@ interface ManualAssignRequest {
   supervisorId?: string;
 }
 
+interface PasswordRecoveryRequest {
+  email?: string;
+}
+
 interface AssignmentStudent {
   id: string;
   fullName: string;
@@ -231,6 +235,74 @@ async function queueEmail(payload: QueuedEmail): Promise<void> {
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 }
+
+export const sendPasswordRecoveryEmail = functions.https.onCall(
+  async (request: functions.https.CallableRequest<PasswordRecoveryRequest>) => {
+    const email = normalizeText(request.data?.email).toLowerCase();
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "A valid email address is required",
+      );
+    }
+
+    try {
+      const user = await admin.auth().getUserByEmail(email);
+      const resetLink = await admin.auth().generatePasswordResetLink(email, {
+        url: "https://dims-must.firebaseapp.com/login",
+        handleCodeInApp: false,
+      });
+      const recipientName = user.displayName || "MUST DIMS user";
+
+      await queueEmail({
+        to: email,
+        subject: "Recover your MUST DIMS password",
+        text:
+          `Hello ${recipientName}, use this link to reset your MUST DIMS password: ` +
+          `${resetLink}`,
+        html: buildEmailShell(
+          "Password Recovery",
+          `Hello ${escapeHtml(recipientName)},`,
+          `
+            <p>We received a request to reset your MUST DIMS password.</p>
+            <p>
+              <a href="${escapeHtml(resetLink)}" style="display:inline-block;background:#1B5E20;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700;">
+                Reset Password
+              </a>
+            </p>
+            <p>If the button does not open, copy and paste this link into your browser:</p>
+            <p style="word-break:break-all;color:#1B5E20;">${escapeHtml(resetLink)}</p>
+            <p>If you did not request this, you can ignore this email.</p>
+          `,
+        ),
+      });
+
+      console.log(`[EMAIL] Queued password recovery email for ${user.uid}`);
+    } catch (error: any) {
+      if (error?.code === "auth/user-not-found") {
+        console.warn("[EMAIL] Password recovery requested for unknown email");
+        return {
+          success: true,
+          message:
+            "If an account exists for this email, a password recovery link will be sent.",
+        };
+      }
+
+      console.error("[EMAIL] Password recovery failed:", error);
+      throw new functions.https.HttpsError(
+        "internal",
+        "Unable to send password recovery email right now",
+      );
+    }
+
+    return {
+      success: true,
+      message:
+        "If an account exists for this email, a password recovery link will be sent.",
+    };
+  },
+);
 
 async function getDocument<T>(collection: string, id?: string | null): Promise<T | null> {
   if (!id) return null;

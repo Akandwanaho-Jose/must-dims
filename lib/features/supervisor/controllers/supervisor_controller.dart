@@ -5,10 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../logbook/data/models/logbook_entry_model.dart';
 import '../../evaluations/data/models/evaluation_model.dart';
 import '../../placements/data/models/placement_model.dart';
+import '../../results/final_marks_model.dart';
+import '../../student/data/models/student_profile_model.dart';
 import '../data/models/supervisor_profile_model.dart';
 
-final supervisorControllerProvider =
-    Provider((ref) => SupervisorController());
+final supervisorControllerProvider = Provider((ref) => SupervisorController());
 
 class SupervisorController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -133,8 +134,9 @@ class SupervisorController {
   }) async {
     await _firestore.collection('internshipReports').doc(reportId).update({
       'status': 'approved',
-      'supervisorFeedback':
-          feedback != null && feedback.trim().isNotEmpty ? feedback.trim() : null,
+      'supervisorFeedback': feedback != null && feedback.trim().isNotEmpty
+          ? feedback.trim()
+          : null,
       'reviewedBy': _auth.currentUser?.uid,
       'reviewedAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
@@ -209,6 +211,70 @@ class SupervisorController {
     } else {
       await existingDoc.reference.set(payload, SetOptions(merge: true));
     }
+  }
+
+  Future<void> submitFinalMarks({
+    required StudentProfileModel student,
+    required String supervisorId,
+    required String supervisorName,
+    required double firstVisitMarks,
+    required double secondVisitMarks,
+    required double companySupervisorMarks,
+    String? remarks,
+  }) async {
+    final placementId = student.currentPlacementId;
+    final totalMarks =
+        firstVisitMarks + secondVisitMarks + companySupervisorMarks;
+    final docId = placementId != null && placementId.trim().isNotEmpty
+        ? placementId
+        : student.uid;
+    final docRef = _firestore.collection('finalMarks').doc(docId);
+    final existingDoc = await docRef.get();
+
+    final payload = <String, dynamic>{
+      'studentId': student.uid,
+      'placementId': placementId,
+      'studentName': student.fullName,
+      'registrationNumber': student.registrationNumber,
+      'program': student.program,
+      'supervisorId': supervisorId,
+      'supervisorName': supervisorName,
+      'firstVisitMarks': firstVisitMarks,
+      'secondVisitMarks': secondVisitMarks,
+      'companySupervisorMarks': companySupervisorMarks,
+      'totalMarks': totalMarks,
+      'remarks': remarks?.trim(),
+      'submittedAt':
+          existingDoc.data()?['submittedAt'] ?? FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }..removeWhere(
+        (key, value) => value == null || (value is String && value.isEmpty),
+      );
+
+    final batch = _firestore.batch();
+    batch.set(docRef, payload, SetOptions(merge: true));
+    batch.set(
+      _firestore.collection('students').doc(student.uid),
+      {
+        'finalMarksId': docId,
+        'finalMarksTotal': totalMarks,
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+
+    await batch.commit();
+  }
+
+  Future<FinalMarksModel?> getFinalMarksForStudent(String studentId) async {
+    final snapshot = await _firestore
+        .collection('finalMarks')
+        .where('studentId', isEqualTo: studentId)
+        .limit(1)
+        .get();
+
+    if (snapshot.docs.isEmpty) return null;
+    return FinalMarksModel.fromFirestore(snapshot.docs.first, null);
   }
 
   // ============================================================================

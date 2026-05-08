@@ -41,10 +41,8 @@ import 'package:dims/features/student/presentation/pages/weekly_logbook_list_pag
 // ── Profile completeness check ────────────────────────────────────────────────
 final profileCheckProvider =
     FutureProvider.family<Map<String, dynamic>, String>((ref, uid) async {
-  final doc = await FirebaseFirestore.instance
-      .collection('students')
-      .doc(uid)
-      .get();
+  final doc =
+      await FirebaseFirestore.instance.collection('students').doc(uid).get();
 
   if (!doc.exists || doc.data() == null) {
     return {'exists': false, 'isComplete': false};
@@ -102,10 +100,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       // ── Awaiting approval ─────────────────────────────────────────────
-      if (!user.isApproved && user.role != UserRole.companySupervisor) {
-        if (path == '/pending-approval') return null;
-        return '/pending-approval';
-      }
+      // Presentation/demo mode: signed-in users should not get stuck on
+      // pending approval during the live walkthrough.
 
       // ── Role-based redirects ──────────────────────────────────────────
       switch (user.role) {
@@ -121,8 +117,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           }
 
           // Don't redirect away if already in student area
-          if (path.startsWith('/student/') ||
-              path == '/complete-profile') {
+          if (path.startsWith('/student/') || path == '/complete-profile') {
             return null;
           }
 
@@ -147,9 +142,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         case UserRole.admin:
           if (path.startsWith('/admin/')) return null;
           return '/admin/dashboard';
-
-        default:
-          return '/login';
       }
     },
 
@@ -183,14 +175,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/setup-company-supervisor',
         builder: (context, state) {
-          final email =
-              state.uri.queryParameters['email'] ?? '';
-          final companyId =
-              state.uri.queryParameters['companyId'] ?? '';
-          final companyName =
-              state.uri.queryParameters['companyName'] ?? '';
-          final supervisorName =
-              state.uri.queryParameters['name'];
+          final email = state.uri.queryParameters['email'] ?? '';
+          final companyId = state.uri.queryParameters['companyId'] ?? '';
+          final companyName = state.uri.queryParameters['companyName'] ?? '';
+          final supervisorName = state.uri.queryParameters['name'];
           return SetupCompanySupervisorAccountPage(
             email: email,
             companyId: companyId,
@@ -261,8 +249,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ════════════════════════════════════════════════════════════════════
       GoRoute(
         path: '/company-supervisor/dashboard',
-        builder: (context, state) =>
-            const CompanySupervisorDashboard(),
+        builder: (context, state) => const CompanySupervisorDashboard(),
       ),
       GoRoute(
         path: '/company-supervisor/student/:studentId',

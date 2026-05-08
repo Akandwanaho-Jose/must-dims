@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dims/features/auth/data/models/user_model.dart';
@@ -7,6 +8,7 @@ import 'package:dims/features/student/data/models/student_profile_model.dart';
 
 final firebaseAuthProvider = Provider((ref) => FirebaseAuth.instance);
 final firestoreProvider = Provider((ref) => FirebaseFirestore.instance);
+final firebaseFunctionsProvider = Provider((ref) => FirebaseFunctions.instance);
 
 final authStateProvider = StreamProvider<UserModel?>((ref) {
   final auth = ref.watch(firebaseAuthProvider);
@@ -33,6 +35,7 @@ class AuthController {
 
   FirebaseAuth get _auth => _ref.read(firebaseAuthProvider);
   FirebaseFirestore get _db => _ref.read(firestoreProvider);
+  FirebaseFunctions get _functions => _ref.read(firebaseFunctionsProvider);
 
   /// Sign in with email and password
   Future<void> signIn(String email, String password) async {
@@ -77,7 +80,7 @@ class AuthController {
         email: email,
         role: role,
         displayName: fullName,
-        isApproved: false, // Wait for admin
+        isApproved: true, // Demo mode: allow immediate access
         createdAt: DateTime.now(),
       );
 
@@ -183,7 +186,7 @@ class AuthController {
         email: email,
         role: role,
         displayName: fullName,
-        isApproved: false,
+        isApproved: true,
         createdAt: DateTime.now(),
       );
 
@@ -267,7 +270,11 @@ class AuthController {
   /// Reset password
   Future<void> resetPassword(String email) async {
     try {
-      await _auth.sendPasswordResetEmail(email: email);
+      await _functions.httpsCallable('sendPasswordRecoveryEmail').call({
+        'email': email,
+      });
+    } on FirebaseFunctionsException catch (e) {
+      throw Exception(e.message ?? 'Password reset failed. Please try again.');
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     } catch (e) {

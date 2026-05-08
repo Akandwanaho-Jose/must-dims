@@ -1,6 +1,10 @@
 // lib/features/admin/presentation/pages/users_management_page.dart
+import 'dart:convert';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dims/features/admin/controllers/admin_stats_controller.dart';
 import 'package:dims/features/admin/controllers/users_management_controller.dart';
 import 'package:dims/features/auth/data/models/user_model.dart';
 
@@ -21,13 +25,15 @@ class UsersManagementPage extends ConsumerStatefulWidget {
   const UsersManagementPage({super.key});
 
   @override
-  ConsumerState<UsersManagementPage> createState() => _UsersManagementPageState();
+  ConsumerState<UsersManagementPage> createState() =>
+      _UsersManagementPageState();
 }
 
-class _UsersManagementPageState extends ConsumerState<UsersManagementPage> 
+class _UsersManagementPageState extends ConsumerState<UsersManagementPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String _searchQuery = '';
+  bool _isImportingEligibleStudents = false;
 
   @override
   void initState() {
@@ -54,11 +60,35 @@ class _UsersManagementPageState extends ConsumerState<UsersManagementPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Users Management',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      'Users Management',
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    FilledButton.icon(
+                      onPressed: _isImportingEligibleStudents
+                          ? null
+                          : _pickAndImportEligibleStudents,
+                      icon: _isImportingEligibleStudents
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.upload_file_rounded),
+                      label: Text(
+                        _isImportingEligibleStudents
+                            ? 'Uploading...'
+                            : 'Upload eligible students',
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -67,8 +97,15 @@ class _UsersManagementPageState extends ConsumerState<UsersManagementPage>
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  'CSV columns: fullName, registrationNumber, program, academicYear, currentLevel, email, phoneNumber',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
                 const SizedBox(height: 16),
-                
+
                 // Search bar
                 TextField(
                   decoration: InputDecoration(
@@ -85,7 +122,7 @@ class _UsersManagementPageState extends ConsumerState<UsersManagementPage>
               ],
             ),
           ),
-          
+
           // Tabs
           TabBar(
             controller: _tabController,
@@ -94,7 +131,7 @@ class _UsersManagementPageState extends ConsumerState<UsersManagementPage>
               Tab(text: 'Supervisors'),
             ],
           ),
-          
+
           // Tab content
           Expanded(
             child: TabBarView(
@@ -115,6 +152,216 @@ class _UsersManagementPageState extends ConsumerState<UsersManagementPage>
       ),
     );
   }
+
+  Future<void> _pickAndImportEligibleStudents() async {
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['csv'],
+        withData: true,
+      );
+
+      if (result == null || result.files.isEmpty) return;
+
+      final bytes = result.files.single.bytes;
+      if (bytes == null) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Unable to read the selected file.')),
+        );
+        return;
+      }
+
+      final csvText = utf8.decode(bytes, allowMalformed: true);
+      final rows = _parseEligibleStudentCsv(csvText);
+
+      if (rows.isEmpty) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('No valid student rows found in the CSV file.'),
+          ),
+        );
+        return;
+      }
+
+      final confirmed = await _confirmEligibleStudentImport(rows.length);
+      if (confirmed != true) return;
+
+      setState(() => _isImportingEligibleStudents = true);
+
+      final importResult = await ref
+          .read(usersManagementControllerProvider)
+          .importEligibleStudents(rows);
+
+      ref.invalidate(approvedUsersProvider(UserRole.student));
+      ref.invalidate(adminStatsProvider);
+      ref.invalidate(studentPlacementReportProvider);
+      ref.invalidate(districtAllocationStatsProvider);
+
+      if (!mounted) return;
+
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Eligible students uploaded: ${importResult.imported} new, '
+            '${importResult.updated} updated, ${importResult.skipped} skipped.',
+          ),
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Failed to upload eligible students: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isImportingEligibleStudents = false);
+      }
+    }
+  }
+
+  Future<bool?> _confirmEligibleStudentImport(int count) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Upload eligible students?'),
+        content: Text(
+          'This will import $count eligible student records. Existing records '
+          'with the same registration number will be updated.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Upload'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+List<EligibleStudentImportRow> _parseEligibleStudentCsv(String csvText) {
+  final records = _readCsvRecords(csvText);
+  if (records.length < 2) return const [];
+
+  final headers = records.first
+      .map((header) => header.trim().toLowerCase().replaceAll(' ', ''))
+      .toList(growable: false);
+
+  int indexOf(List<String> names) {
+    for (final name in names) {
+      final index = headers.indexOf(name);
+      if (index != -1) return index;
+    }
+    return -1;
+  }
+
+  final nameIndex = indexOf(['fullname', 'name', 'studentname']);
+  final registrationIndex = indexOf([
+    'registrationnumber',
+    'registrationno',
+    'regno',
+    'studentnumber',
+  ]);
+  final programIndex = indexOf(['program', 'programme', 'course']);
+  final academicYearIndex = indexOf(['academicyear', 'year']);
+  final currentLevelIndex = indexOf(['currentlevel', 'level', 'yearofstudy']);
+  final emailIndex = indexOf(['email', 'emailaddress']);
+  final phoneIndex = indexOf(['phonenumber', 'phone', 'contact']);
+
+  if (nameIndex == -1 || registrationIndex == -1 || programIndex == -1) {
+    throw Exception(
+      'CSV must include fullName, registrationNumber, and program columns.',
+    );
+  }
+
+  String cell(List<String> record, int index) {
+    if (index < 0 || index >= record.length) return '';
+    return record[index].trim();
+  }
+
+  return records
+      .skip(1)
+      .map((record) {
+        final fullName = cell(record, nameIndex);
+        final registrationNumber = cell(record, registrationIndex);
+        final program = cell(record, programIndex);
+
+        if (fullName.isEmpty || registrationNumber.isEmpty || program.isEmpty) {
+          return null;
+        }
+
+        return EligibleStudentImportRow(
+          fullName: fullName,
+          registrationNumber: registrationNumber,
+          program: program,
+          academicYear: int.tryParse(cell(record, academicYearIndex)) ??
+              DateTime.now().year,
+          currentLevel: cell(record, currentLevelIndex).isEmpty
+              ? 'Year Three'
+              : cell(record, currentLevelIndex),
+          email: cell(record, emailIndex).isEmpty
+              ? null
+              : cell(record, emailIndex),
+          phoneNumber: cell(record, phoneIndex).isEmpty
+              ? null
+              : cell(record, phoneIndex),
+        );
+      })
+      .whereType<EligibleStudentImportRow>()
+      .toList(growable: false);
+}
+
+List<List<String>> _readCsvRecords(String input) {
+  final records = <List<String>>[];
+  final currentRecord = <String>[];
+  final currentField = StringBuffer();
+  var inQuotes = false;
+
+  for (var i = 0; i < input.length; i++) {
+    final char = input[i];
+    final next = i + 1 < input.length ? input[i + 1] : null;
+
+    if (char == '"') {
+      if (inQuotes && next == '"') {
+        currentField.write('"');
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (char == ',' && !inQuotes) {
+      currentRecord.add(currentField.toString());
+      currentField.clear();
+      continue;
+    }
+
+    if ((char == '\n' || char == '\r') && !inQuotes) {
+      if (char == '\r' && next == '\n') i++;
+      currentRecord.add(currentField.toString());
+      currentField.clear();
+      if (currentRecord.any((field) => field.trim().isNotEmpty)) {
+        records.add(List<String>.from(currentRecord));
+      }
+      currentRecord.clear();
+      continue;
+    }
+
+    currentField.write(char);
+  }
+
+  currentRecord.add(currentField.toString());
+  if (currentRecord.any((field) => field.trim().isNotEmpty)) {
+    records.add(currentRecord);
+  }
+
+  return records;
 }
 
 class _UsersListView extends ConsumerWidget {
@@ -139,7 +386,8 @@ class _UsersListView extends ConsumerWidget {
             : users.where((user) {
                 final email = user.email.toLowerCase();
                 final name = (user.displayName ?? '').toLowerCase();
-                return email.contains(searchQuery) || name.contains(searchQuery);
+                return email.contains(searchQuery) ||
+                    name.contains(searchQuery);
               }).toList();
 
         if (filteredUsers.isEmpty) {
@@ -444,14 +692,16 @@ class _UserActionsButton extends ConsumerWidget {
             const SizedBox(height: 10),
             _ProfileLine(
               label: 'Phone',
-              value: (user.phoneNumber == null || user.phoneNumber!.trim().isEmpty)
-                  ? 'Not set'
-                  : user.phoneNumber!,
+              value:
+                  (user.phoneNumber == null || user.phoneNumber!.trim().isEmpty)
+                      ? 'Not set'
+                      : user.phoneNumber!,
             ),
             const SizedBox(height: 10),
             _ProfileLine(
               label: 'Role',
-              value: user.role.name[0].toUpperCase() + user.role.name.substring(1),
+              value:
+                  user.role.name[0].toUpperCase() + user.role.name.substring(1),
             ),
           ],
         ),
@@ -501,7 +751,8 @@ class _UserActionsButton extends ConsumerWidget {
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${user.displayName ?? user.email} deactivated')),
+          SnackBar(
+              content: Text('${user.displayName ?? user.email} deactivated')),
         );
       }
     } catch (e) {
@@ -627,8 +878,7 @@ class _EditUserDialogState extends ConsumerState<_EditUserDialog> {
       text: widget.user.displayName ?? widget.roleDetails['fullName'] ?? '',
     );
     _phoneController = TextEditingController(
-      text:
-          widget.user.phoneNumber ?? widget.roleDetails['phoneNumber'] ?? '',
+      text: widget.user.phoneNumber ?? widget.roleDetails['phoneNumber'] ?? '',
     );
     _registrationController = TextEditingController(
       text: widget.roleDetails['registrationNumber'] ?? '',
@@ -641,12 +891,10 @@ class _EditUserDialogState extends ConsumerState<_EditUserDialog> {
     );
     final storedProgram = widget.roleDetails['program'] as String?;
     final storedLevel = widget.roleDetails['currentLevel'] as String?;
-    _selectedProgram = _studentProgramOptions.contains(storedProgram)
-        ? storedProgram
-        : null;
-    _selectedLevel = _studentLevelOptions.contains(storedLevel)
-        ? storedLevel
-        : null;
+    _selectedProgram =
+        _studentProgramOptions.contains(storedProgram) ? storedProgram : null;
+    _selectedLevel =
+        _studentLevelOptions.contains(storedLevel) ? storedLevel : null;
   }
 
   @override
@@ -692,7 +940,8 @@ class _EditUserDialogState extends ConsumerState<_EditUserDialog> {
                       ),
                     ),
                     IconButton(
-                      onPressed: _isSaving ? null : () => Navigator.pop(context),
+                      onPressed:
+                          _isSaving ? null : () => Navigator.pop(context),
                       icon: const Icon(Icons.close_rounded),
                     ),
                   ],
@@ -818,7 +1067,8 @@ class _EditUserDialogState extends ConsumerState<_EditUserDialog> {
                         children: [
                           FilledButton(
                             onPressed: _isSaving ? null : _saveChanges,
-                            child: Text(_isSaving ? 'Saving...' : 'Save changes'),
+                            child:
+                                Text(_isSaving ? 'Saving...' : 'Save changes'),
                           ),
                           const SizedBox(height: 10),
                           OutlinedButton(
@@ -860,7 +1110,9 @@ class _EditUserDialogState extends ConsumerState<_EditUserDialog> {
     setState(() => _isSaving = true);
 
     try {
-      await ref.read(usersManagementControllerProvider).updateManagedUserProfile(
+      await ref
+          .read(usersManagementControllerProvider)
+          .updateManagedUserProfile(
             user: widget.user,
             displayName: _nameController.text,
             phoneNumber: _phoneController.text,

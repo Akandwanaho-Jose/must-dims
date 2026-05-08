@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'pages/companies_management_page.dart';
+import 'pages/final_marks_results_page.dart';
 import 'pages/overview_page.dart';
 import 'pages/pending_approvals_page.dart';
 import 'pages/pending_placements_page.dart';
@@ -185,6 +186,7 @@ class _AdminPageViewport extends StatelessWidget {
         CompaniesManagementPage(),
         SuccessStoriesManagementPage(),
         PendingPlacementsPage(),
+        FinalMarksResultsPage(),
       ],
     );
   }
@@ -473,5 +475,11 @@ const List<_AdminNavItem> _adminNavItems = [
     shortLabel: 'Placements',
     icon: Icons.pending_actions_rounded,
     hasAlert: true,
+  ),
+  _AdminNavItem(
+    title: 'Final Marks',
+    subtitle: 'MUST Administration',
+    shortLabel: 'Results',
+    icon: Icons.fact_check_rounded,
   ),
 ];

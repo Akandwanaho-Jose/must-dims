@@ -591,7 +591,7 @@ class StudentDetailsScreen extends ConsumerWidget {
         ),
         icon: const Icon(Icons.grade_outlined),
         label: const Text(
-          'Submit Final Evaluation',
+          'Award Final Marks',
           style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
         ),
         style: FilledButton.styleFrom(
